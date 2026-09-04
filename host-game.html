@@ -78,23 +78,26 @@
   .rv-grid{display:grid;grid-template-columns:1.2fr .9fr;gap:1.5rem;max-width:1100px;margin:1rem auto;align-items:start}
   @media(max-width:820px){.rv-grid{grid-template-columns:1fr}}
   .bars{background:var(--surface);border-radius:16px;padding:1.25rem}
-  .bar-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.8rem}
+  .bars-title{font-size:.78rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:1rem}
+  .bar-row{display:flex;flex-direction:column;gap:.55rem;padding:.85rem 1rem;border-radius:12px;margin-bottom:.7rem;background:rgba(255,255,255,.04)}
   .bar-row:last-child{margin-bottom:0}
-  .bar-sh{width:34px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;color:#fff}
+  .bar-row.correct{background:rgba(46,204,113,.13);outline:2px solid var(--green)}
+  .bar-head{display:flex;align-items:flex-start;gap:.7rem}
+  .bar-sh{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;color:#fff;font-size:.95rem}
   .bar-sh.A{background:var(--a)}.bar-sh.B{background:var(--b)}.bar-sh.C{background:var(--c)}.bar-sh.D{background:var(--d);color:#1a1a2e}
-  .bar-track{flex:1;background:rgba(255,255,255,.08);border-radius:8px;height:34px;position:relative;overflow:hidden}
-  .bar-fill{height:100%;border-radius:8px;transition:width .6s;min-width:2px}
+  .bar-label{flex:1;font-weight:700;font-size:1rem;line-height:1.35;word-break:break-word}
+  .bar-label .ok{color:var(--green);font-weight:900;margin-left:.25rem}
+  .bar-cnt{flex-shrink:0;font-family:'Nunito';font-weight:900;font-size:1.05rem;min-width:2.2rem;text-align:right}
+  .bar-track{height:12px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:6px;transition:width .6s;min-width:2px}
   .bar-fill.A{background:var(--a)}.bar-fill.B{background:var(--b)}.bar-fill.C{background:var(--c)}.bar-fill.D{background:var(--d)}
-  .bar-txt{position:absolute;left:10px;top:0;height:34px;display:flex;align-items:center;font-weight:700;font-size:.85rem;max-width:88%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .bar-cnt{width:34px;text-align:right;font-family:'Nunito';font-weight:800}
-  .bar-row.correct .bar-track{outline:3px solid var(--green)}
   .scorecard{background:var(--surface);border-radius:16px;padding:1.25rem}
   .scorecard h3{font-size:.78rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:.85rem}
-  .lrow{display:flex;align-items:center;gap:.75rem;padding:.5rem .3rem;border-bottom:1px solid rgba(255,255,255,.05)}
+  .lrow{display:flex;align-items:center;gap:.75rem;padding:.6rem .4rem;border-bottom:1px solid rgba(255,255,255,.06)}
   .lrow:last-child{border-bottom:none}
-  .rk{font-family:'Nunito';font-weight:900;width:26px;text-align:center;color:var(--muted)}
-  .rn{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .rs{font-family:'Nunito';font-weight:800;color:var(--yellow)}
+  .rk{font-family:'Nunito';font-weight:900;width:26px;text-align:center;color:var(--muted);flex-shrink:0}
+  .rn{flex:1;font-weight:700;line-height:1.3;word-break:break-word}
+  .rs{font-family:'Nunito';font-weight:800;color:var(--yellow);flex-shrink:0}
   .rv-actions{text-align:center;margin-top:1.5rem}
 
   #screen-final{padding:1.5rem;background:radial-gradient(ellipse at top,#243b6b,#0e1428 60%)}
@@ -102,7 +105,7 @@
   .podium{display:flex;justify-content:center;align-items:flex-end;gap:1rem;min-height:360px;max-width:760px;margin:0 auto 1.5rem}
   .plat{flex:1;max-width:220px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
   .p-av{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Nunito';font-weight:900;font-size:2rem;color:#1a1a2e;margin-bottom:.5rem;border:4px solid rgba(255,255,255,.3)}
-  .p-nm{font-family:'Nunito';font-weight:800;font-size:1.15rem;text-align:center;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .p-nm{font-family:'Nunito';font-weight:800;font-size:1.15rem;text-align:center;max-width:210px;line-height:1.25;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .p-sc{color:var(--yellow);font-weight:800;margin-bottom:.55rem}
   .p-bl{width:100%;border-radius:14px 14px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:1rem;font-family:'Nunito';font-weight:900;font-size:2.8rem;color:rgba(255,255,255,.9)}
   .first .p-av{background:var(--gold)}.first .p-bl{background:linear-gradient(180deg,var(--gold),#b8860b);height:280px}
@@ -342,10 +345,15 @@ function renderReveal(){
   document.getElementById('rv-rate').textContent=rate+'%';
   document.getElementById('rv-sub').textContent=`answered correctly · ${correct} of ${answered}`;
   const sh=['▲','●','■','◆'],cl=['A','B','C','D'];const max=Math.max(1,...counts);
-  document.getElementById('rv-bars').innerHTML=d.opts.map((t,k)=>
-    `<div class="bar-row ${k===d.correct?'correct':''}"><div class="bar-sh ${cl[k]}">${sh[k]}</div>
-     <div class="bar-track"><div class="bar-fill ${cl[k]}" style="width:${counts[k]/max*100}%"></div><div class="bar-txt">${esc(t)}${k===d.correct?' ✓':''}</div></div>
-     <div class="bar-cnt">${counts[k]}</div></div>`).join('');
+  document.getElementById('rv-bars').innerHTML='<div class="bars-title">How the room answered</div>'+d.opts.map((t,k)=>
+    `<div class="bar-row ${k===d.correct?'correct':''}">
+       <div class="bar-head">
+         <div class="bar-sh ${cl[k]}">${sh[k]}</div>
+         <div class="bar-label">${esc(t)}${k===d.correct?'<span class="ok">✓</span>':''}</div>
+         <div class="bar-cnt">${counts[k]}</div>
+       </div>
+       <div class="bar-track"><div class="bar-fill ${cl[k]}" style="width:${counts[k]/max*100}%"></div></div>
+     </div>`).join('');
   renderBoard('rv-board',5);
   const last=i>=game.deck.length-1;
   document.getElementById('next-btn').textContent=last?'See final podium →':'Next →';

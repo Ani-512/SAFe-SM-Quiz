@@ -119,31 +119,26 @@
    4. Copy the firebaseConfig object it gives you over the one below
       (make sure databaseURL is included).
    The SAME config goes in BOTH host-game.html and play.html. */
-// Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBUjsot15FuYuB2or9XklqF3H_-Bnxi9YE",
+  authDomain: "safe-quiz-20238.firebaseapp.com",
+  databaseURL: "https://safe-quiz-20238-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "safe-quiz-20238",
+  storageBucket: "safe-quiz-20238.firebasestorage.app",
+  messagingSenderId: "728130638190",
+  appId: "1:728130638190:web:6f9ae15944ad6c2b6d317f",
+  measurementId: "G-F63L91MNJV"
+};
 
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyBUjsot15FuYuB2or9XklqF3H_-Bnxi9YE",
-    authDomain: "safe-quiz-20238.firebaseapp.com",
-    databaseURL: "https://safe-quiz-20238-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "safe-quiz-20238",
-    storageBucket: "safe-quiz-20238.firebasestorage.app",
-    messagingSenderId: "728130638190",
-    appId: "1:728130638190:web:6f9ae15944ad6c2b6d317f",
-    measurementId: "G-F63L91MNJV"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-
-let db=null, fbOK=false;
-try{ if(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey.indexOf('PASTE')<0){ firebase.initializeApp(FIREBASE_CONFIG); db=firebase.database(); fbOK=true; } }catch(e){ fbOK=false; }
+let db=null, fbReady=false;
+function configLooksSet(){const c=FIREBASE_CONFIG||{};return !!(c.apiKey&&c.databaseURL&&c.apiKey.indexOf('PASTE')<0&&c.databaseURL.indexOf('PASTE')<0);}
+function ensureFirebase(){
+  if(fbReady)return '';
+  if(typeof firebase==='undefined')return "Firebase didn't load — check your internet connection, then reload the page.";
+  if(!configLooksSet())return "This page isn't set up yet. It needs the same firebaseConfig as the host page (pasted into the top of play.html).";
+  try{ if(!firebase.apps||!firebase.apps.length){firebase.initializeApp(FIREBASE_CONFIG);} db=firebase.database(); fbReady=true; return ''; }
+  catch(e){ return "Firebase init error: "+((e&&e.message)||e); }
+}
 
 let pin=null, pid=null, myName="", gameRef=null, meRef=null, game=null;
 let myScore=0, answeredQ=-1, ptimer=null, lastPhase="", lastQ=-1;
@@ -153,17 +148,20 @@ function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>'
 
 const params=new URLSearchParams(location.search);
 if(params.get('pin'))document.getElementById('pin-inp').value=params.get('pin').replace(/[^0-9]/g,'').slice(0,6);
-if(!fbOK){document.getElementById('fb-warn').innerHTML='<div class="setup-warn">⚙️ This page needs the same Firebase config as the host. Ask your host, or paste <code>firebaseConfig</code> into the top of <code>play.html</code>.</div>';}
+if(typeof firebase==='undefined' || !configLooksSet()){document.getElementById('fb-warn').innerHTML='<div class="setup-warn">⚙️ This page needs the same Firebase config as the host. Ask your host, or paste <code>firebaseConfig</code> into the top of <code>play.html</code>.</div>';}
 
 async function joinGame(){
-  if(!fbOK){return;}
+  const err=ensureFirebase();
+  if(err){ alert(err); return; }
   pin=document.getElementById('pin-inp').value.replace(/[^0-9]/g,'').slice(0,6);
   myName=document.getElementById('name-inp').value.trim().slice(0,24);
   if(pin.length<6){alert('Enter the 6-digit PIN');return;}
   if(!myName){alert('Enter your name');return;}
-  gameRef=db.ref('games/'+pin);
-  const snap=await gameRef.get();
-  if(!snap.exists()){alert('Game not found. Check the PIN.');return;}
+  try{
+    gameRef=db.ref('games/'+pin);
+    const snap=await gameRef.get();
+    if(!snap.exists()){alert('Game not found. Check the PIN with your host.');return;}
+  }catch(e){ alert('Could not connect: '+((e&&e.message)||e)); return; }
   pid=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
   meRef=gameRef.child('players/'+pid);
   await meRef.set({name:myName,score:0,joinedAt:Date.now(),answers:{}});

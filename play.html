@@ -119,13 +119,28 @@
    4. Copy the firebaseConfig object it gives you over the one below
       (make sure databaseURL is included).
    The SAME config goes in BOTH host-game.html and play.html. */
-const FIREBASE_CONFIG = {
-  apiKey: "PASTE_API_KEY",
-  authDomain: "PASTE_PROJECT.firebaseapp.com",
-  databaseURL: "https://PASTE_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "PASTE_PROJECT",
-  appId: "PASTE_APP_ID"
-};
+// Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyBUjsot15FuYuB2or9XklqF3H_-Bnxi9YE",
+    authDomain: "safe-quiz-20238.firebaseapp.com",
+    databaseURL: "https://safe-quiz-20238-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "safe-quiz-20238",
+    storageBucket: "safe-quiz-20238.firebasestorage.app",
+    messagingSenderId: "728130638190",
+    appId: "1:728130638190:web:6f9ae15944ad6c2b6d317f",
+    measurementId: "G-F63L91MNJV"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
 
 let db=null, fbOK=false;
 try{ if(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey.indexOf('PASTE')<0){ firebase.initializeApp(FIREBASE_CONFIG); db=firebase.database(); fbOK=true; } }catch(e){ fbOK=false; }

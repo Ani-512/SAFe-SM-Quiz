@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAFe Scrum Master — Quiz Hub</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap');
+  :root{--bg:#1a1a2e;--surface:#16213e;--card:#0f3460;--accent:#e94560;--green:#2ecc71;--muted:#a0aec0}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Nunito Sans',sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e 55%,#0f3460);color:#fff;min-height:100vh;padding:2.5rem 1.5rem}
+  h1,h2{font-family:'Nunito'}
+  .wrap{max-width:920px;margin:0 auto}
+  .badge{background:var(--accent);font-family:'Nunito';font-weight:900;font-size:.8rem;padding:.35rem 1rem;border-radius:20px;display:inline-block;margin-bottom:1.25rem;letter-spacing:2px;text-transform:uppercase}
+  h1{font-size:clamp(2rem,6vw,3rem);font-weight:900;text-align:center;margin-bottom:.5rem}
+  .sub{color:var(--muted);text-align:center;margin-bottom:2.5rem}
+  .hero{background:var(--surface);border-radius:20px;padding:2rem;text-align:center;margin-bottom:1.5rem;border:2px solid rgba(233,69,96,.4)}
+  .hero h2{font-size:1.5rem;font-weight:900;margin-bottom:.5rem}
+  .hero p{color:var(--muted);max-width:560px;margin:0 auto 1.5rem;line-height:1.6}
+  .btn{display:inline-block;padding:1rem 2.6rem;border-radius:50px;border:none;cursor:pointer;font-family:'Nunito';font-weight:800;font-size:1.05rem;background:var(--accent);color:#fff;text-decoration:none;transition:all .15s}
+  .btn:hover{transform:scale(1.04)}
+  .btn.ghost{background:transparent;border:2px solid rgba(255,255,255,.25);font-size:.95rem;padding:.8rem 2rem}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem}
+  @media(max-width:640px){.row2{grid-template-columns:1fr}}
+  .modecard{background:var(--surface);border-radius:16px;padding:1.5rem}
+  .modecard h3{font-size:1.1rem;font-weight:800;margin-bottom:.4rem}
+  .modecard p{color:var(--muted);font-size:.85rem;line-height:1.5;margin-bottom:1rem}
+  .sec-title{font-size:.8rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin:.5rem 0 1rem}
+  .mini-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.7rem}
+  .mini-card{background:var(--surface);border-radius:12px;padding:1rem;text-decoration:none;color:#fff;display:flex;flex-direction:column;gap:.3rem;border:2px solid transparent;transition:all .15s;position:relative;overflow:hidden}
+  .mini-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:0}
+  .mini-card:hover{background:var(--card);border-color:rgba(255,255,255,.18);transform:translateY(-2px)}
+  .mc-n{font-size:.7rem;font-weight:800;color:var(--c);letter-spacing:1px}
+  .mc-t{font-family:'Nunito';font-weight:800;font-size:.92rem;line-height:1.25}
+  .foot{text-align:center;color:var(--muted);font-size:.8rem;margin-top:2rem;line-height:1.6}
+</style></head>
+<body><div class="wrap">
+  <div style="text-align:center"><span class="badge">SAFe® Scrum Master</span></div>
+  <h1>Quiz Hub</h1>
+  <p class="sub">Run a synchronized live game, or practice a single lesson on your own.</p>
+
+  <div class="hero">
+    <h2>🎬 Live Game (Kahoot-style)</h2>
+    <p>You host on the big screen. Everyone scans one QR code, joins with the game PIN, and answers the <b>same questions in sync</b>. After each question the room sees who got it right and the live podium — then you advance everyone together.</p>
+    <a class="btn" href="host-game.html">Host a live game →</a>
+    <div style="margin-top:.75rem"><a class="btn ghost" href="play.html">I'm a player — join with a PIN</a></div>
+  </div>
+
+  <div class="sec-title">Or — self-paced practice (independent links)</div>
+  <div class="mini-grid">
+      <a class="mini-card" href="lesson-1-introducing-scrum-in-safe.html" style="--c:#e21b3c"><span class="mc-n">L1</span><span class="mc-t">🚀 Introducing Scrum in SAFe</span></a>
+      <a class="mini-card" href="lesson-2-characterizing-the-role-of-the-scrum-master.html" style="--c:#1368ce"><span class="mc-n">L2</span><span class="mc-t">🎯 Characterizing the Role of the Scrum Master</span></a>
+      <a class="mini-card" href="lesson-3-experiencing-pi-planning.html" style="--c:#26890c"><span class="mc-n">L3</span><span class="mc-t">📅 Experiencing PI Planning</span></a>
+      <a class="mini-card" href="lesson-4-facilitating-iteration-execution.html" style="--c:#ffa602"><span class="mc-n">L4</span><span class="mc-t">⚙️ Facilitating Iteration Execution</span></a>
+      <a class="mini-card" href="lesson-5-finishing-the-pi.html" style="--c:#9b59b6"><span class="mc-n">L5</span><span class="mc-t">🏁 Finishing the PI</span></a>
+      <a class="mini-card" href="lesson-6-ai-for-scrum-masters.html" style="--c:#1abc9c"><span class="mc-n">L6</span><span class="mc-t">🤖 AI for Scrum Masters</span></a>
+  </div>
+
+  <div class="foot">Live game needs a free Firebase project (one-time setup — see the note inside host-game.html).<br>Self-paced lessons work standalone and can use an optional shared podium.</div>
+</div></body></html>

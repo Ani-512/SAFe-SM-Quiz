@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 5 — SAFe SM Quiz</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap');
+  :root{--bg:#1a1a2e;--surface:#16213e;--card:#0f3460;--accent:#e94560;--yellow:#f5a623;--green:#2ecc71;--red:#e74c3c;--muted:#a0aec0;--white:#fff;--theme:#9b59b6;--ans-a:#e21b3c;--ans-b:#1368ce;--ans-c:#26890c;--ans-d:#ffa602;--gold:#ffd700;--silver:#c0c0c0;--bronze:#cd7f32}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--white);min-height:100vh;overflow-x:hidden}
+  h1,h2,h3{font-family:'Nunito',sans-serif}
+  .screen{display:none;min-height:100vh}
+  .screen.active{display:flex;flex-direction:column}
+  #screen-name{background:linear-gradient(135deg,#1a1a2e 0%,var(--theme) 240%);align-items:center;justify-content:center;padding:2rem;text-align:center}
+  .badge{background:var(--theme);color:#fff;font-family:'Nunito';font-weight:900;font-size:.8rem;padding:.35rem 1rem;border-radius:20px;display:inline-block;margin-bottom:1rem;letter-spacing:2px;text-transform:uppercase}
+  .n-icon{font-size:3rem;margin-bottom:.4rem}
+  .n-title{font-size:clamp(1.5rem,5vw,2.3rem);font-weight:900;line-height:1.1;margin-bottom:.3rem}
+  .n-sub{color:var(--muted);margin-bottom:1.5rem}
+  .qr-box{background:#fff;border-radius:16px;padding:12px;display:inline-block;margin-bottom:.5rem;line-height:0}
+  .qr-cap{font-size:.8rem;color:var(--muted);margin-bottom:1.25rem}
+  .name-input{width:100%;max-width:360px;padding:1rem 1.25rem;border-radius:14px;border:3px solid rgba(255,255,255,.15);background:var(--surface);color:#fff;font-size:1.1rem;font-family:'Nunito';font-weight:700;text-align:center;margin-bottom:1rem;outline:none}
+  .name-input:focus{border-color:var(--theme)}
+  .rules{background:var(--surface);border-radius:16px;padding:1.1rem 1.6rem;text-align:left;max-width:380px;width:100%;margin:1.25rem 0}
+  .rules li{list-style:none;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.06);display:flex;gap:.6rem;align-items:center;font-size:.86rem}
+  .rules li:last-child{border-bottom:none}
+  .row-links{margin-top:1rem;display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+  .tiny{color:var(--muted);font-size:.8rem;cursor:pointer;text-decoration:underline}
+  .tiny:hover{color:#fff}
+  a.tiny{color:var(--muted)}
+  #screen-quiz{background:var(--bg)}
+  .qhead{background:var(--surface);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid rgba(255,255,255,.08);flex-shrink:0}
+  .qhead .lbl{font-family:'Nunito';font-weight:800;font-size:.95rem}
+  .qhead .prog{font-size:.82rem;color:var(--muted)}
+  .qhead .sc{background:var(--card);padding:.4rem 1rem;border-radius:20px;font-family:'Nunito';font-weight:800;font-size:.88rem}
+  .tbar-wrap{height:8px;background:rgba(255,255,255,.1);flex-shrink:0}
+  .tbar{height:100%;background:linear-gradient(90deg,var(--green),var(--yellow));transition:width 1s linear,background .5s}
+  .tbar.urgent{background:linear-gradient(90deg,var(--red),var(--accent))}
+  .qwrap{flex:1;display:flex;flex-direction:column;padding:1.5rem;max-width:900px;margin:0 auto;width:100%}
+  .qcount{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:.75rem}
+  .qtimer{text-align:center;font-family:'Nunito';font-weight:900;font-size:1.5rem;margin-bottom:1rem;color:var(--yellow)}
+  .qtext{font-family:'Nunito';font-weight:800;font-size:clamp(1.1rem,3vw,1.5rem);line-height:1.4;background:var(--surface);border-radius:16px;padding:1.5rem 2rem;margin-bottom:1.5rem;text-align:center;flex-shrink:0}
+  .answers{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;flex:1}
+  @media(max-width:500px){.answers{grid-template-columns:1fr}}
+  .abtn{display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;border-radius:12px;border:none;cursor:pointer;font-family:'Nunito';font-weight:700;font-size:.95rem;color:#fff;text-align:left;transition:all .15s;min-height:70px;word-break:break-word}
+  .abtn:hover:not(:disabled){transform:scale(1.02);filter:brightness(1.1)}
+  .abtn:disabled{cursor:default}
+  .abtn.a{background:var(--ans-a)}.abtn.b{background:var(--ans-b)}.abtn.c{background:var(--ans-c)}.abtn.d{background:var(--ans-d);color:#1a1a2e}
+  .abtn .shape{width:36px;height:36px;flex-shrink:0;border-radius:6px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900}
+  .abtn.incorrect{opacity:.4}
+  .abtn.revealed-correct{outline:4px solid var(--green);filter:brightness(1.15)}
+  .fb{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);background:var(--surface);border-radius:20px;padding:1.6rem 2.3rem;text-align:center;z-index:100;opacity:0;transition:all .25s;pointer-events:none;border:3px solid transparent;max-width:90vw}
+  .fb.show{transform:translate(-50%,-50%) scale(1);opacity:1}
+  .fb.ok{border-color:var(--green)}.fb.no{border-color:var(--red)}
+  .fb .em{font-size:2.8rem;display:block;margin-bottom:.35rem}
+  .fb .lb{font-family:'Nunito';font-weight:800;font-size:1.3rem}
+  .fb .pt{color:var(--yellow);font-weight:700;margin-top:.2rem}
+  .fb .ex{font-size:.82rem;color:var(--muted);margin-top:.5rem;max-width:300px;line-height:1.4}
+  /* INTERSTITIAL */
+  #screen-inter{background:radial-gradient(ellipse at top,#243b6b 0%,#1a1a2e 65%);align-items:center;justify-content:center;padding:1.5rem;text-align:center}
+  .i-wrap{max-width:520px;width:100%}
+  .i-kicker{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:.75rem}
+  .i-rate-card{background:var(--surface);border-radius:18px;padding:1.5rem;margin-bottom:1rem}
+  .i-rate-big{font-family:'Nunito';font-weight:900;font-size:3rem;line-height:1;margin-bottom:.35rem}
+  .i-rate-sub{color:var(--muted);font-size:.9rem}
+  .i-rate-bar{height:12px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden;margin-top:1rem}
+  .i-rate-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--yellow));border-radius:6px;transition:width .6s}
+  .i-podium{display:flex;gap:.6rem;justify-content:center;margin-bottom:1rem}
+  .i-p{flex:1;background:var(--surface);border-radius:12px;padding:.75rem .5rem;max-width:150px}
+  .i-p .m{font-size:1.3rem}
+  .i-p .nm{font-weight:800;font-size:.85rem;margin:.2rem 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .i-p .sc{color:var(--yellow);font-weight:700;font-size:.78rem}
+  .i-you{background:var(--card);border-radius:12px;padding:.9rem;margin-bottom:1.25rem;font-weight:700}
+  .i-you b{font-family:'Nunito';color:var(--theme);font-size:1.15rem}
+  #screen-result{background:linear-gradient(135deg,#1a1a2e 0%,var(--theme) 260%);align-items:center;justify-content:center;padding:2rem;text-align:center}
+  .r-trophy{font-size:4rem;margin-bottom:.75rem}
+  .r-title{font-size:1.8rem;font-weight:900;margin-bottom:.3rem}
+  .r-sub{color:var(--muted);margin-bottom:1.6rem}
+  .r-circle{width:150px;height:150px;border-radius:50%;border:6px solid var(--yellow);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 1.6rem;background:var(--surface)}
+  .r-num{font-family:'Nunito';font-weight:900;font-size:2.3rem;color:var(--yellow)}
+  .r-lbl{font-size:.72rem;color:var(--muted)}
+  .r-stats{display:flex;gap:1.1rem;justify-content:center;margin-bottom:1.4rem;flex-wrap:wrap}
+  .r-box{background:var(--surface);border-radius:12px;padding:.9rem 1.3rem;min-width:90px}
+  .r-val{font-family:'Nunito';font-weight:800;font-size:1.4rem}
+  .r-blbl{font-size:.72rem;color:var(--muted)}
+  .r-msg{font-family:'Nunito';font-weight:800;font-size:1.05rem;color:var(--yellow);margin-bottom:1.4rem}
+  .btn{display:inline-block;padding:.8rem 1.9rem;border-radius:50px;border:none;cursor:pointer;font-family:'Nunito';font-weight:800;font-size:.98rem;transition:all .15s;margin:.25rem;text-decoration:none}
+  .btn:hover{transform:scale(1.04)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-secondary{background:var(--surface);color:#fff;border:2px solid rgba(255,255,255,.2)}
+  .btn-yellow{background:var(--yellow);color:#1a1a2e}
+  .btn-theme{background:var(--theme);color:#fff}
+  #screen-podium{background:radial-gradient(ellipse at top,#243b6b 0%,#1a1a2e 60%);padding:1.5rem}
+  .p-head{text-align:center;margin-bottom:.5rem}
+  .p-title{font-size:1.8rem;font-weight:900}
+  .p-sub{color:var(--muted);font-size:.9rem;margin-bottom:.25rem}
+  .live-dot{display:inline-flex;align-items:center;gap:.4rem;font-size:.75rem;color:var(--green);font-weight:700;margin-bottom:1rem}
+  .live-dot .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .podium{display:flex;justify-content:center;align-items:flex-end;gap:.6rem;max-width:640px;margin:1.5rem auto 2rem;min-height:260px}
+  .plat{flex:1;max-width:180px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+  .p-avatar{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Nunito';font-weight:900;font-size:1.5rem;color:#1a1a2e;margin-bottom:.5rem;border:3px solid rgba(255,255,255,.3)}
+  .p-name{font-family:'Nunito';font-weight:800;font-size:.95rem;margin-bottom:.15rem;text-align:center;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .p-score{font-size:.82rem;color:var(--yellow);font-weight:700;margin-bottom:.5rem}
+  .p-block{width:100%;border-radius:12px 12px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:.75rem;font-family:'Nunito';font-weight:900;font-size:2rem;color:rgba(255,255,255,.85)}
+  .plat.first .p-avatar{background:var(--gold)}.plat.first .p-block{background:linear-gradient(180deg,var(--gold),#b8860b);height:190px}
+  .plat.second .p-avatar{background:var(--silver)}.plat.second .p-block{background:linear-gradient(180deg,var(--silver),#808080);height:140px}
+  .plat.third .p-avatar{background:var(--bronze)}.plat.third .p-block{background:linear-gradient(180deg,var(--bronze),#8b5a2b);height:100px}
+  .crown{font-size:1.6rem;margin-bottom:.2rem}
+  .full-board{max-width:560px;margin:0 auto}
+  .fb-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:.75rem;text-align:center}
+  .lrow{display:flex;align-items:center;gap:.85rem;background:var(--surface);border-radius:10px;padding:.6rem 1rem;margin-bottom:.4rem}
+  .lrow.me{outline:2px solid var(--theme);background:var(--card)}
+  .rank{font-family:'Nunito';font-weight:900;font-size:1rem;width:26px;text-align:center;color:var(--muted)}
+  .rname{flex:1;font-weight:700;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rscore{font-family:'Nunito';font-weight:800;color:var(--yellow);font-size:.95rem}
+  .rpct{font-size:.75rem;color:var(--muted);width:44px;text-align:right}
+  .p-actions{text-align:center;margin-top:1.5rem}
+  .empty-board{text-align:center;color:var(--muted);padding:2rem;font-size:.9rem}
+  #screen-admin{background:var(--bg)}
+  .a-head{background:var(--surface);padding:1.15rem 1.75rem;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid rgba(255,255,255,.08)}
+  .a-title{font-family:'Nunito';font-weight:900;font-size:1.2rem}
+  .a-body{padding:2rem;max-width:800px;margin:0 auto;width:100%}
+  .a-sec{margin-bottom:2rem}
+  .a-sec h3{font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:.85rem}
+  .stat-line{display:flex;justify-content:space-between;background:var(--surface);border-radius:10px;padding:.85rem 1.15rem;margin-bottom:.5rem;font-size:.92rem}
+  .stat-line b{font-family:'Nunito';color:var(--yellow)}
+  .mode-pill{display:inline-block;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:700;margin-bottom:1rem}
+  .mode-local{background:rgba(160,174,192,.2);color:var(--muted)}
+  .mode-shared{background:rgba(46,204,113,.15);color:var(--green)}
+  .reset-all{background:rgba(231,76,60,.15);border:2px solid var(--red);color:var(--red);padding:.7rem 1.6rem;border-radius:8px;cursor:pointer;font-family:'Nunito';font-weight:800;font-size:.9rem;transition:all .15s}
+  .reset-all:hover{background:var(--red);color:#fff}
+  .note{font-size:.83rem;color:var(--muted);line-height:1.5;margin-bottom:1rem}
+  .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--card);padding:.75rem 1.5rem;border-radius:10px;font-weight:700;font-size:.9rem;transition:transform .3s;z-index:999;border-left:4px solid var(--green)}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div id="screen-name" class="screen active">
+  <div class="badge">SAFe® Scrum Master</div>
+  <div class="n-icon">🏁</div>
+  <h1 class="n-title">Lesson 5</h1>
+  <p class="n-sub">Finishing the PI</p>
+  <div class="qr-box" id="qr"></div>
+  <div class="qr-cap">📱 Scan to play on your phone</div>
+  <input class="name-input" id="player-name" maxlength="24" placeholder="Enter your name to play" autocomplete="off">
+  <ul class="rules">
+    <li>⚡ <span>Answer fast — speed earns bonus points</span></li>
+    <li>🔀 <span>Questions rotate randomly each round</span></li>
+    <li>📊 <span>See how everyone did after each question</span></li>
+    <li>🏆 <span>Top 3 appear on the podium at the end</span></li>
+  </ul>
+  <button class="btn btn-theme" style="font-size:1.1rem;padding:1rem 3rem" onclick="startQuiz()">Let's Go! 🚀</button>
+  <div class="row-links">
+    <a class="tiny" href="index.html">🏠 All lessons</a>
+    <span class="tiny" onclick="showAdmin()">🔒 Host / admin</span>
+  </div>
+</div>
+
+<div id="screen-quiz" class="screen">
+  <div class="qhead">
+    <div class="lbl">🏁 Lesson 5</div>
+    <div class="prog" id="q-prog">Question 1 / 10</div>
+    <div class="sc">⭐ <span id="q-score">0</span></div>
+  </div>
+  <div class="tbar-wrap"><div class="tbar" id="tbar"></div></div>
+  <div class="qwrap">
+    <div class="qcount" id="q-count">QUESTION 1</div>
+    <div class="qtimer" id="q-timer">20</div>
+    <div class="qtext" id="q-text"></div>
+    <div class="answers" id="q-answers"></div>
+  </div>
+  <div class="fb" id="fb">
+    <span class="em" id="fb-em">✅</span>
+    <div class="lb" id="fb-lb">Correct!</div>
+    <div class="pt" id="fb-pt"></div>
+    <div class="ex" id="fb-ex"></div>
+  </div>
+</div>
+
+<div id="screen-inter" class="screen">
+  <div class="i-wrap">
+    <div class="i-kicker" id="i-kicker">How everyone did on that question</div>
+    <div class="i-rate-card">
+      <div class="i-rate-big" id="i-rate">–</div>
+      <div class="i-rate-sub" id="i-rate-sub">answered correctly</div>
+      <div class="i-rate-bar"><div class="i-rate-fill" id="i-rate-fill" style="width:0%"></div></div>
+    </div>
+    <div class="i-kicker">🏆 Podium so far</div>
+    <div class="i-podium" id="i-podium"></div>
+    <div class="i-you" id="i-you">You're currently <b>–</b></div>
+    <button class="btn btn-theme" onclick="interContinue()" id="i-continue">Continue →</button>
+  </div>
+</div>
+
+<div id="screen-result" class="screen">
+  <div class="r-trophy" id="r-trophy">🏆</div>
+  <h1 class="r-title">Nice work, <span id="r-player">Player</span>!</h1>
+  <p class="r-sub">Lesson 5: Finishing the PI</p>
+  <div class="r-circle"><span class="r-num" id="r-pct">0%</span><span class="r-lbl">Correct</span></div>
+  <div class="r-stats">
+    <div class="r-box"><div class="r-val" id="r-correct">0</div><div class="r-blbl">Correct</div></div>
+    <div class="r-box"><div class="r-val" id="r-wrong">0</div><div class="r-blbl">Wrong</div></div>
+    <div class="r-box"><div class="r-val" id="r-points">0</div><div class="r-blbl">Points</div></div>
+  </div>
+  <div class="r-msg" id="r-msg">Great effort!</div>
+  <button class="btn btn-primary" style="font-size:1.05rem;padding:.9rem 2.4rem" onclick="showPodium()">🏆 See the Podium</button><br>
+  <button class="btn btn-yellow" onclick="playAgain()">🔄 Play again</button>
+</div>
+
+<div id="screen-podium" class="screen">
+  <div class="p-head">
+    <div class="p-title">🏆 Podium</div>
+    <div class="p-sub">Lesson 5: Finishing the PI</div>
+    <div class="live-dot" id="live-dot" style="display:none"><span class="dot"></span> Live — updating as players finish</div>
+  </div>
+  <div class="podium" id="podium"></div>
+  <div class="full-board">
+    <div class="fb-title" id="board-count">Leaderboard</div>
+    <div id="board-list"></div>
+  </div>
+  <div class="p-actions">
+    <button class="btn btn-yellow" onclick="playAgain()">🔄 Play again</button>
+    <button class="btn btn-secondary" onclick="refreshPodium()">🗘 Refresh</button>
+  </div>
+</div>
+
+<div id="screen-admin" class="screen">
+  <div class="a-head">
+    <div class="a-title">🔒 Host Panel — Lesson 5</div>
+    <button class="btn btn-secondary" style="font-size:.85rem;padding:.5rem 1.2rem" onclick="backHome()">← Back</button>
+  </div>
+  <div class="a-body">
+    <div class="a-sec"><h3>Leaderboard Mode</h3><div id="mode-badge"></div><div class="note" id="mode-note"></div></div>
+    <div class="a-sec"><h3>Session Stats</h3><div id="admin-stats"></div></div>
+    <div class="a-sec"><h3>Reset</h3><div class="note">Clear all responses for this lesson so the next group starts fresh.</div>
+      <button class="reset-all" onclick="resetBoard()">🗑️ Reset all responses for Lesson 5</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══ SHARED-LEADERBOARD CONFIG ═══
+   For ONE combined podium across up to 40 devices:
+   1. Free account at https://jsonbin.io
+   2. Create a Bin with exactly:  {"scores":[],"stats":{}}
+   3. Create an Access Key with READ + UPDATE permission
+   4. Paste Bin ID + Access Key below, set enabled:true
+   Leave enabled:false for local-only (single shared device). */
+const LB = { enabled:false, binId:"PASTE_YOUR_BIN_ID_HERE", accessKey:"PASTE_YOUR_ACCESS_KEY_HERE" };
+const API = "https://api.jsonbin.io/v3/b/";
+
+const LESSON = {"id": 5, "title": "Finishing the PI", "icon": "🏁", "color": "#9b59b6", "draw": 10, "questions": [{"q": "What is the purpose of the Innovation and Planning (IP) Iteration?", "answers": ["A regular sprint with double capacity", "A cadence-based buffer for innovation, hackathons, infrastructure, and PI Planning prep", "A sprint only for bug fixes", "An optional iteration teams may skip"], "correct": 1, "explanation": "The IP Iteration provides a guard band for reliability, PI readiness, planning, and innovation — not just overflow.", "qid": "L5Q0"}, {"q": "What is a hackathon in the IP Iteration?", "answers": ["A competition against other ARTs", "A 1–2 day event where teams work on mission-aligned ideas, then demo results", "A next-PI planning event", "An external security audit"], "correct": 1, "explanation": "Hackathons: people work on what they want, with whom they want, as long as it reflects the mission — and demo at the end.", "qid": "L5Q1"}, {"q": "What does the ART Predictability Measure show?", "answers": ["Team velocity across the organization", "Actual business value achieved vs. planned business value across PIs", "The ROI of individual features", "Defects per iteration"], "correct": 1, "explanation": "It reports actual vs. planned business value as a percentage, targeting an effective process control range.", "qid": "L5Q2"}, {"q": "What are the six steps of the Inspect & Adapt problem-solving workshop?", "answers": ["Plan, Do, Check, Act, Reflect, Improve", "Agree on problem → Pareto → 5 Whys → Restate → Brainstorm → Identify improvement items", "Measure → Root cause → Assign → Fix → Verify → Close", "Retro → Backlog → Plan → Execute → Review → Deploy"], "correct": 1, "explanation": "Steps: Agree on the problem → Pareto analysis → 5 Whys/root cause → Restate problem → Brainstorm → Identify improvement backlog items.", "qid": "L5Q3"}, {"q": "What is a Scrum Master ANTI-PATTERN during the PI System Demo?", "answers": ["Helping the team prepare", "Allowing only the PO to present", "Facilitating the problem-solving workshop", "Providing team data"], "correct": 1, "explanation": "Having only the PO present is an anti-pattern — the SM should facilitate full team participation.", "qid": "L5Q4"}, {"q": "What is a 'supplier showcase' in the IP Iteration?", "answers": ["A trade show to sell products", "A structured demo from a supplier to help teams better leverage its products/services", "A vendor contract review", "A system-team integration report"], "correct": 1, "explanation": "Supplier showcases help teams reduce work by leveraging supplier products and help POs/PMs identify enablers and improve roadmaps.", "qid": "L5Q5"}, {"q": "How are PI Objectives rated in the team performance assessment?", "answers": ["Simple pass/fail on all stories", "Planned business value (1–10) vs. actual, averaged into an ART % achievement", "Story points delivered as a percentage", "Time spent vs. budgeted per feature"], "correct": 1, "explanation": "Each objective gets a planned business value (1–10); actuals are rated and averaged into an ART % achievement score.", "qid": "L5Q6"}, {"q": "What is a Scrum Master best practice during Inspect & Adapt?", "answers": ["Facilitate PI System Demo prep and provide team data", "Take notes and report to management afterward", "Delegate all I&A to the PO", "Skip the workshop if velocity was on target"], "correct": 0, "explanation": "Best practices: facilitate PI System Demo prep, provide team data, facilitate the workshop, and ensure improvement items enter PI Planning.", "qid": "L5Q7"}, {"q": "Where do improvement items from the I&A workshop go?", "answers": ["A separate log outside planning", "Into the PI Planning process as backlog items for the next PI", "To the portfolio team for budget approval", "Into a wiki for reference only"], "correct": 1, "explanation": "Improvement items should enter the next PI's planning as real backlog items — not disappear into a side log.", "qid": "L5Q8"}, {"q": "Why explore spikes during the IP Iteration?", "answers": ["To finish committed stories that fell behind", "To research uncertain areas and reduce risk before the next PI", "To give more capacity to fast developers", "To boost team morale"], "correct": 1, "explanation": "Exploring spikes in the IP Iteration reduces technical risk and uncertainty ahead of the next PI.", "qid": "L5Q9"}, {"q": "What does the IP Iteration provide for cadence-based delivery?", "answers": ["A guarantee that all work finishes", "An estimating guard band / capacity margin to enable cadence", "A way to skip PI Planning", "Extra budget for the ART"], "correct": 1, "explanation": "The IP iteration provides an estimating guard band and capacity margin so the ART can reliably operate on cadence.", "qid": "L5Q10"}, {"q": "From where can innovative ideas come, per SAFe?", "answers": ["Only from Agile Teams", "Both internal sources (teams) and external sources (customers, suppliers, competitors)", "Only from leadership", "Only from customers"], "correct": 1, "explanation": "Innovation comes from many internal and external sources — teams, customer requests, suppliers, and competitors.", "qid": "L5Q11"}, {"q": "If ad hoc teams are used for the Inspect & Adapt, what may the Scrum Master's role become?", "answers": ["They must always facilitate", "They may be participants rather than facilitators", "They must present the whole demo", "They should skip the event"], "correct": 1, "explanation": "When ad hoc teams are formed for I&A, Scrum Masters may participate rather than facilitate.", "qid": "L5Q12"}, {"q": "What analysis technique identifies the biggest root cause in the problem-solving workshop?", "answers": ["SWOT analysis", "Pareto analysis", "Monte Carlo simulation", "Value stream mapping"], "correct": 1, "explanation": "Pareto analysis identifies the biggest root cause; the '5 Whys' then drills into it.", "qid": "L5Q13"}, {"q": "What is the suggested timebox for the team performance assessment?", "answers": ["10–15 minutes", "45–60 minutes", "2 hours", "A full day"], "correct": 1, "explanation": "The team performance assessment is suggested to run about 45–60 minutes.", "qid": "L5Q14"}]};
+const LS_KEY = "safe_lb_L" + LESSON.id;
+
+let deck=[], qi=0, score=0, correct=0, timeLeft=20, timer=null, answered=false;
+let playerName="", myId="", myEntry=null, myStats={}, pollTimer=null;
+let aggCache={scores:[],stats:{}}, lastOk=false, interDone=false, interTimer=null;
+
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+/* ── QR ── */
+function renderQR(){
+  const box=document.getElementById('qr'); box.innerHTML=''; const url=location.href;
+  try{ if(typeof QRCode!=='undefined'){ new QRCode(box,{text:url,width:150,height:150,colorDark:'#16213e',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); return; } }catch(e){}
+  box.innerHTML='<img alt="QR code" width="150" height="150" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='+encodeURIComponent(url)+'">';
+}
+
+/* ── STORE (shape: {scores:[], stats:{qid:{seen,correct}}}) ── */
+function blank(){return {scores:[],stats:{}};}
+function localGet(){try{const v=JSON.parse(localStorage.getItem(LS_KEY));return v&&v.scores?v:blank();}catch(e){return blank();}}
+function localSet(o){try{localStorage.setItem(LS_KEY,JSON.stringify(o));}catch(e){}}
+async function remoteGet(){
+  const r=await fetch(API+LB.binId+"/latest",{headers:{"X-Access-Key":LB.accessKey}});
+  if(!r.ok)throw new Error("read "+r.status);
+  const d=await r.json(); const rec=d.record||{};
+  return {scores:Array.isArray(rec.scores)?rec.scores:[], stats:rec.stats||{}};
+}
+async function remotePut(o){
+  const r=await fetch(API+LB.binId,{method:"PUT",headers:{"Content-Type":"application/json","X-Access-Key":LB.accessKey},body:JSON.stringify(o)});
+  if(!r.ok)throw new Error("write "+r.status);
+}
+function mergeEntry(list,e){const out=(list||[]).filter(x=>x.id!==e.id);out.push(e);return out;}
+function mergeStats(agg,add){agg=agg||{};for(const k in add){if(!agg[k])agg[k]={seen:0,correct:0};agg[k].seen+=add[k].seen;agg[k].correct+=add[k].correct;}return agg;}
+
+async function getStore(){
+  if(LB.enabled){
+    try{
+      const r=await remoteGet();
+      if(myEntry && !r.scores.some(e=>e.id===myEntry.id)){ r.scores=mergeEntry(r.scores,myEntry); try{await remotePut(r);}catch(e){} }
+      return r;
+    }catch(e){ return localGet(); }
+  }
+  return localGet();
+}
+async function submitFinal(entry,stats){
+  const loc=localGet(); loc.scores=mergeEntry(loc.scores,entry); loc.stats=mergeStats(loc.stats,stats); localSet(loc);
+  if(!LB.enabled)return;
+  for(let a=0;a<3;a++){
+    try{ const r=await remoteGet(); r.scores=mergeEntry(r.scores,entry); r.stats=mergeStats(r.stats,stats); await remotePut(r); return; }
+    catch(e){ await sleep(300+Math.random()*500); }
+  }
+}
+
+/* ── QUIZ ── */
+function startQuiz(){
+  const nm=document.getElementById('player-name').value.trim();
+  if(!nm){toast("Please enter your name first ✍️");document.getElementById('player-name').focus();return;}
+  playerName=nm.slice(0,24);
+  myId=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  myStats={}; myEntry=null;
+  const picked=shuffle(LESSON.questions).slice(0,LESSON.draw||10);
+  deck=picked.map(q=>{const opts=q.answers.map((t,i)=>({t,ok:i===q.correct}));const sh=shuffle(opts);return {qid:q.qid,q:q.q,ex:q.explanation,opts:sh,correct:sh.findIndex(o=>o.ok)};});
+  qi=0;score=0;correct=0;
+  getStore().then(s=>aggCache=s);   // pre-load snapshot for interstitials
+  show('screen-quiz');render();
+}
+function render(){
+  const item=deck[qi];const shapes=['▲','●','■','◆'],cls=['a','b','c','d'];
+  document.getElementById('q-prog').textContent=`Question ${qi+1} / ${deck.length}`;
+  document.getElementById('q-score').textContent=score.toLocaleString();
+  document.getElementById('q-count').textContent=`QUESTION ${qi+1} OF ${deck.length}`;
+  document.getElementById('q-text').textContent=item.q;
+  document.getElementById('q-answers').innerHTML=item.opts.map((o,i)=>`<button class="abtn ${cls[i]}" onclick="pick(${i})"><span class="shape">${shapes[i]}</span>${esc(o.t)}</button>`).join('');
+  answered=false;startTimer();
+}
+function startTimer(){timeLeft=20;paintTimer();clearInterval(timer);timer=setInterval(()=>{timeLeft--;paintTimer();if(timeLeft<=0){clearInterval(timer);timeUp();}},1000);}
+function paintTimer(){const pct=(timeLeft/20)*100,bar=document.getElementById('tbar'),n=document.getElementById('q-timer');bar.style.width=pct+'%';bar.className='tbar'+(timeLeft<=5?' urgent':'');n.textContent=timeLeft;n.style.color=timeLeft<=5?'var(--accent)':'var(--yellow)';}
+function record(ok){const item=deck[qi];myStats[item.qid]={seen:1,correct:ok?1:0};lastOk=ok;}
+function pick(i){
+  if(answered)return;answered=true;clearInterval(timer);
+  const item=deck[qi],btns=document.querySelectorAll('.abtn');btns.forEach(b=>b.disabled=true);
+  const ok=i===item.correct;const pts=ok?Math.round(500+(timeLeft/20)*500):0;
+  if(ok){score+=pts;correct++;}
+  btns[item.correct].classList.add('revealed-correct');if(!ok)btns[i].classList.add('incorrect');
+  record(ok);feedback(ok,pts,item.ex,false);
+  setTimeout(showInterstitial,2200);
+}
+function timeUp(){
+  if(answered)return;answered=true;
+  const item=deck[qi],btns=document.querySelectorAll('.abtn');btns.forEach(b=>b.disabled=true);
+  btns[item.correct].classList.add('revealed-correct');
+  record(false);feedback(false,0,item.ex,true);
+  setTimeout(showInterstitial,2200);
+}
+function feedback(ok,pts,ex,to){
+  const el=document.getElementById('fb');const em=['🎉','🔥','⚡','✅','🏆'];
+  document.getElementById('fb-em').textContent=to?'⏰':(ok?em[Math.floor(Math.random()*em.length)]:'❌');
+  document.getElementById('fb-lb').textContent=to?"Time's Up!":(ok?'Correct!':'Not Quite!');
+  document.getElementById('fb-pt').textContent=ok?`+${pts} pts`:'0 pts';
+  document.getElementById('fb-ex').textContent=ex||'';
+  el.className='fb show '+(ok?'ok':'no');
+}
+function hideFb(){document.getElementById('fb').className='fb';}
+
+/* ── INTERSTITIAL: per-question correct rate + live podium + your rank ── */
+async function showInterstitial(){
+  hideFb();interDone=false;show('screen-inter');
+  renderInter();                       // optimistic with current cache
+  aggCache=await getStore();           // refresh from shared store
+  renderInter();
+  clearTimeout(interTimer);interTimer=setTimeout(interContinue,4500);
+}
+function renderInter(){
+  const item=deck[qi];
+  const s=(aggCache.stats&&aggCache.stats[item.qid])||{seen:0,correct:0};
+  const seen=s.seen+1, corr=s.correct+(lastOk?1:0);   // fold in my own answer
+  const rate=Math.round(corr/seen*100);
+  document.getElementById('i-rate').textContent=rate+'%';
+  document.getElementById('i-rate-sub').textContent=(seen===1)?"you're among the first to try this one":`answered correctly (${corr} of ${seen})`;
+  document.getElementById('i-rate-fill').style.width=rate+'%';
+  // podium so far
+  const scores=(aggCache.scores||[]).slice().sort((a,b)=>b.score-a.score||a.ts-b.ts);
+  const medals=['🥇','🥈','🥉'];const pod=document.getElementById('i-podium');
+  if(scores.length===0){pod.innerHTML='<div class="i-p"><div class="m">🎯</div><div class="nm">No finishers yet</div><div class="sc">be the first!</div></div>';}
+  else{pod.innerHTML=scores.slice(0,3).map((e,i)=>`<div class="i-p"><div class="m">${medals[i]}</div><div class="nm">${esc(e.name)}</div><div class="sc">${e.score.toLocaleString()}</div></div>`).join('');}
+  // my projected rank
+  let rank=1;scores.forEach(e=>{if(e.score>score)rank++;});
+  const you=document.getElementById('i-you');
+  if(scores.length===0){you.innerHTML=`Your score so far: <b>${score.toLocaleString()}</b>`;}
+  else{you.innerHTML=`You're projected <b>#${rank}</b> · ${score.toLocaleString()} pts`;}
+}
+function interContinue(){
+  if(interDone)return;interDone=true;clearTimeout(interTimer);
+  qi++;
+  if(qi<deck.length){show('screen-quiz');render();}else finish();
+}
+
+async function finish(){
+  const total=deck.length,pct=Math.round((correct/total)*100);
+  myEntry={id:myId,name:playerName,score,correct,total,pct,ts:Date.now()};
+  await submitFinal(myEntry,myStats);
+  document.getElementById('r-player').textContent=playerName;
+  document.getElementById('r-pct').textContent=pct+'%';
+  document.getElementById('r-correct').textContent=correct;
+  document.getElementById('r-wrong').textContent=total-correct;
+  document.getElementById('r-points').textContent=score.toLocaleString();
+  let tr,msg;
+  if(pct===100){tr='🏆';msg='Perfect score! You nailed it!';}
+  else if(pct>=80){tr='🌟';msg="Excellent — you're exam-ready!";}
+  else if(pct>=60){tr='👍';msg='Good effort! Keep studying!';}
+  else{tr='📚';msg="Keep practicing — you've got this!";}
+  document.getElementById('r-trophy').textContent=tr;document.getElementById('r-msg').textContent=msg;
+  show('screen-result');
+}
+
+/* ── PODIUM ── */
+async function showPodium(){show('screen-podium');document.getElementById('live-dot').style.display=LB.enabled?'inline-flex':'none';await refreshPodium();if(LB.enabled){clearInterval(pollTimer);pollTimer=setInterval(refreshPodium,4000);}}
+async function refreshPodium(){let st=await getStore();let list=(st.scores||[]).slice().sort((a,b)=>b.score-a.score||a.ts-b.ts);renderPodium(list);}
+function renderPodium(list){
+  const pod=document.getElementById('podium');const top=list.slice(0,3);
+  const order=[1,0,2];const classes=['first','second','third'];const medals=['🥇','🥈','🥉'];
+  if(top.length===0){pod.innerHTML='';document.getElementById('board-list').innerHTML='<div class="empty-board">No scores yet — be the first to play! 🚀</div>';document.getElementById('board-count').textContent='Leaderboard';return;}
+  pod.innerHTML=order.map(idx=>{if(!top[idx])return '<div class="plat"></div>';const e=top[idx],place=idx;return `<div class="plat ${classes[place]}">${place===0?'<div class="crown">👑</div>':''}<div class="p-avatar">${esc(e.name.charAt(0).toUpperCase())}</div><div class="p-name">${esc(e.name)}</div><div class="p-score">${e.score.toLocaleString()} pts</div><div class="p-block">${medals[place]}</div></div>`;}).join('');
+  const board=document.getElementById('board-list');
+  board.innerHTML=list.map((e,i)=>`<div class="lrow ${myEntry&&e.id===myEntry.id?'me':''}"><div class="rank">${i+1}</div><div class="rname">${esc(e.name)}${myEntry&&e.id===myEntry.id?' (you)':''}</div><div class="rpct">${e.pct}%</div><div class="rscore">${e.score.toLocaleString()}</div></div>`).join('');
+  document.getElementById('board-count').textContent=`Leaderboard — ${list.length} player${list.length!==1?'s':''}`;
+}
+
+/* ── NAV / ADMIN ── */
+function playAgain(){clearInterval(pollTimer);show('screen-name');document.getElementById('player-name').value=playerName;document.getElementById('player-name').focus();}
+function backHome(){clearInterval(pollTimer);show('screen-name');}
+function showAdmin(){
+  clearInterval(pollTimer);
+  const badge=document.getElementById('mode-badge'),note=document.getElementById('mode-note');
+  if(LB.enabled){badge.innerHTML='<span class="mode-pill mode-shared">● SHARED — live podium across all devices</span>';note.textContent='All participants who open this link feed one combined podium. Great for up to ~40 people on their own phones or laptops.';}
+  else{badge.innerHTML='<span class="mode-pill mode-local">○ LOCAL — this device only</span>';note.textContent='Scores are stored only in this browser. Turn on Shared mode (LB config at the top of this file) to combine many devices into one podium.';}
+  renderAdminStats();show('screen-admin');
+}
+async function renderAdminStats(){
+  const st=await getStore();const list=st.scores||[];const el=document.getElementById('admin-stats');
+  if(list.length===0){el.innerHTML='<div class="note">No responses recorded yet.</div>';return;}
+  const avg=Math.round(list.reduce((s,e)=>s+e.pct,0)/list.length);
+  const top=list.slice().sort((a,b)=>b.score-a.score)[0];
+  // toughest question
+  let tough=null;for(const k in (st.stats||{})){const s=st.stats[k];if(s.seen>=3){const r=s.correct/s.seen;if(!tough||r<tough.r)tough={qid:k,r};}}
+  let toughLine='';
+  if(tough){const q=LESSON.questions.find(x=>x.qid===tough.qid);toughLine=`<div class="stat-line"><span>Toughest question</span><b>${Math.round(tough.r*100)}% right</b></div>`+ (q?`<div class="note" style="margin-top:.4rem">"${esc(q.q)}"</div>`:'');}
+  el.innerHTML=`<div class="stat-line"><span>Total players</span><b>${list.length}</b></div><div class="stat-line"><span>Average correct rate</span><b>${avg}%</b></div><div class="stat-line"><span>Top scorer</span><b>${esc(top.name)} (${top.score.toLocaleString()})</b></div>`+toughLine;
+}
+async function resetBoard(){
+  if(!confirm('Reset ALL responses for Lesson 5? This cannot be undone.'))return;
+  localSet(blank());
+  if(LB.enabled){try{await remotePut(blank());}catch(e){toast('Local cleared; remote reset failed — check config');}}
+  myEntry=null;renderAdminStats();toast('All responses reset ✅');
+}
+
+document.getElementById('player-name').addEventListener('keydown',e=>{if(e.key==='Enter')startQuiz();});
+window.addEventListener('load',renderQR);
+</script>
+</body>
+</html>

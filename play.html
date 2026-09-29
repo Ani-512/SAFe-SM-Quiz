@@ -165,23 +165,26 @@ async function joinGame(){
   pid=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
   meRef=gameRef.child('players/'+pid);
   await meRef.set({name:myName,score:0,joinedAt:Date.now(),answers:{}});
-  meRef.onDisconnect().remove();
+  // Do NOT remove the player on disconnect — a phone locking or backgrounding
+  // mid-game would otherwise delete their name and score. Records persist for the game.
   document.getElementById('play-name').textContent=myName;
   gameRef.on('value',s=>{game=s.val();onGame();});
   show('screen-wait');
 }
 
 function onGame(){
-  if(!game){alert('The host ended the game.');location.reload();return;}
-  const phase=game.phase, qi=game.currentQ;
-  if(phase==='lobby'){ show('screen-wait'); }
-  else if(phase==='question'){
-    if(qi!==lastQ){ answeredQ=-1; lastQ=qi; }        // new question
-    if(answeredQ===qi){ showLocked(); } else { renderQuestion(qi); }
-  }
-  else if(phase==='reveal'){ clearInterval(ptimer); renderReveal(qi); }
-  else if(phase==='final'){ clearInterval(ptimer); renderFinal(); }
-  lastPhase=phase;
+  try{
+    if(!game){alert('The host ended the game.');location.reload();return;}
+    const phase=game.phase, qi=game.currentQ;
+    if(phase==='lobby'){ show('screen-wait'); }
+    else if(phase==='question'){
+      if(qi!==lastQ){ answeredQ=-1; lastQ=qi; }        // new question
+      if(answeredQ===qi){ showLocked(); } else { renderQuestion(qi); }
+    }
+    else if(phase==='reveal'){ clearInterval(ptimer); renderReveal(qi); }
+    else if(phase==='final'){ clearInterval(ptimer); renderFinal(); }
+    lastPhase=phase;
+  }catch(e){ console.error('player onGame error (ignored):',e); }
 }
 
 function renderQuestion(qi){
@@ -221,13 +224,18 @@ function showLocked(){
   show('screen-play');
 }
 
+function playerList(){
+  const players=(game&&game.players)||{};
+  return Object.keys(players)
+    .map(id=>{const p=players[id]||{};return {id,name:p.name||'Player',score:p.score||0,joinedAt:p.joinedAt||0,answers:p.answers||{}};})
+    .sort((a,b)=>(b.score||0)-(a.score||0)||(a.joinedAt||0)-(b.joinedAt||0));
+}
 function myRank(){
-  const players=game.players||{};
-  const list=Object.keys(players).map(id=>({id,...players[id]})).sort((a,b)=>(b.score||0)-(a.score||0)||(a.joinedAt||0)-(b.joinedAt||0));
+  const list=playerList();
   return {rank:list.findIndex(p=>p.id===pid)+1,total:list.length};
 }
 function renderReveal(qi){
-  const d=game.deck[qi];const me=(game.players[pid]||{}).answers||{};const my=me[qi];
+  const d=game.deck[qi];const meRec=(game.players&&game.players[pid])||{};const me=meRec.answers||{};const my=me[qi];
   const ok=my&&my.ok;const pts=my?my.pts:0;const r=myRank();
   document.getElementById('pres-inner').innerHTML=
     `<div class="rv-emoji">${my?(ok?'🎉':'❌'):'⏰'}</div>
@@ -239,8 +247,7 @@ function renderReveal(qi){
   show('screen-pres');
 }
 function renderFinal(){
-  const players=game.players||{};
-  const list=Object.keys(players).map(id=>({id,...players[id]})).sort((a,b)=>(b.score||0)-(a.score||0)||(a.joinedAt||0)-(b.joinedAt||0));
+  const list=playerList();
   const top=list.slice(0,3);const order=[1,0,2],cls=['first','second','third'],md=['🥇','🥈','🥉'];
   const r=myRank();
   const pod=top.length?order.map(idx=>{if(!top[idx])return '<div class="plat"></div>';const e=top[idx];

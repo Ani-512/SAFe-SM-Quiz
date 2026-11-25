@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Host a Live Game — Sprint Planning</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap');
+  :root{--bg:#1a1a2e;--surface:#16213e;--card:#0f3460;--accent:#e94560;--yellow:#f5a623;--green:#2ecc71;--red:#e74c3c;--muted:#a0aec0;--white:#fff;--gold:#ffd700;--silver:#c0c0c0;--bronze:#cd7f32;--a:#e21b3c;--b:#1368ce;--c:#26890c;--d:#ffa602}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:#fff;min-height:100vh;overflow-x:hidden}
+  h1,h2,h3,.n{font-family:'Nunito',sans-serif}
+  .screen{display:none;min-height:100vh}
+  .screen.active{display:flex;flex-direction:column}
+  .btn{display:inline-block;padding:.85rem 2rem;border-radius:50px;border:none;cursor:pointer;font-family:'Nunito';font-weight:800;font-size:1rem;transition:all .15s;margin:.25rem;text-decoration:none;color:#fff}
+  .btn:hover{transform:scale(1.04)}
+  .btn-primary{background:var(--accent)}
+  .btn-secondary{background:var(--surface);border:2px solid rgba(255,255,255,.2)}
+  .btn-yellow{background:var(--yellow);color:#1a1a2e}
+  .btn-green{background:var(--green)}
+  .setup-warn{max-width:560px;margin:2rem auto;background:rgba(233,69,96,.12);border:1px solid var(--accent);border-radius:14px;padding:1.25rem 1.5rem;color:#ffd7de;font-size:.9rem;line-height:1.6}
+  .setup-warn code{background:rgba(0,0,0,.3);padding:.1rem .4rem;border-radius:4px}
+  .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(90px);background:var(--card);padding:.75rem 1.5rem;border-radius:10px;font-weight:700;font-size:.9rem;transition:transform .3s;z-index:999;border-left:4px solid var(--green)}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+  @media(max-width:560px){.tiles{grid-template-columns:1fr 1fr}}
+  .tile{display:flex;align-items:center;gap:1rem;padding:1.2rem 1.4rem;border-radius:14px;border:none;color:#fff;font-family:'Nunito';font-weight:800;font-size:1.05rem;text-align:left;cursor:pointer;transition:all .12s;min-height:84px;word-break:break-word}
+  .tile:hover:not(:disabled){filter:brightness(1.08);transform:scale(1.01)}
+  .tile:disabled{cursor:default}
+  .tile.A{background:var(--a)}.tile.B{background:var(--b)}.tile.C{background:var(--c)}.tile.D{background:var(--d);color:#1a1a2e}
+  .tile .sh{width:40px;height:40px;flex-shrink:0;border-radius:8px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:900}
+  .tile.dim{opacity:.35}
+  .tile.right{outline:5px solid var(--green);filter:brightness(1.12)}
+
+  #screen-setup{align-items:center;justify-content:center;padding:2rem;text-align:center;background:linear-gradient(135deg,#1a1a2e,#0f3460)}
+  .badge{background:var(--accent);color:#fff;font-family:'Nunito';font-weight:900;font-size:.8rem;padding:.35rem 1rem;border-radius:20px;display:inline-block;margin-bottom:1.25rem;letter-spacing:2px;text-transform:uppercase}
+  h1.big{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:900;margin-bottom:.4rem}
+  .sub{color:var(--muted);margin-bottom:2rem}
+  .pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.8rem;max-width:760px;margin:0 auto 1.5rem}
+  .pcard{background:var(--surface);border:2px solid transparent;border-radius:14px;padding:1.1rem;cursor:pointer;text-align:left;transition:all .15s;position:relative;overflow:hidden}
+  .pcard::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--pc)}
+  .pcard:hover{transform:translateY(-3px);background:var(--card);border-color:rgba(255,255,255,.2)}
+  .pcard.sel{border-color:var(--pc);background:var(--card)}
+  .pc-n{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--pc);margin-bottom:.4rem}
+  .pc-t{font-family:'Nunito';font-weight:800;font-size:1rem;line-height:1.3}
+  .pc-m{font-size:.78rem;color:var(--muted);margin-top:.35rem}
+
+  #screen-lobby{padding:1.5rem;background:radial-gradient(ellipse at top,#243b6b,#0e1428 60%)}
+  .lobby-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;max-width:1100px;margin:0 auto 1.5rem}
+  .join-box{background:var(--surface);border-radius:18px;padding:1.5rem 2rem;display:flex;gap:2rem;align-items:center;flex-wrap:wrap;justify-content:center}
+  .qr-host{background:#fff;border-radius:16px;padding:14px;line-height:0}
+  .join-info .k{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px}
+  .join-info .url{font-size:1.05rem;font-weight:700;margin:.2rem 0 1rem;word-break:break-all}
+  .pin-big{font-family:'Nunito';font-weight:900;font-size:clamp(2.5rem,8vw,4.5rem);letter-spacing:.5rem;color:var(--yellow);line-height:1}
+  .pin-lbl{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:2px}
+  .players-wrap{max-width:1100px;margin:1.5rem auto 0;text-align:center}
+  .players-count{font-family:'Nunito';font-weight:900;font-size:1.4rem;margin-bottom:1rem}
+  .chips{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
+  .chip{background:var(--card);padding:.5rem 1rem;border-radius:20px;font-weight:700;font-size:.9rem;animation:pop .3s}
+  @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+  .lobby-actions{text-align:center;margin-top:2rem}
+
+  #screen-q{padding:1.5rem;background:var(--bg)}
+  .q-top{display:flex;align-items:center;justify-content:space-between;max-width:1100px;margin:0 auto 1rem;width:100%}
+  .q-idx{font-family:'Nunito';font-weight:800;color:var(--muted)}
+  .q-timer-circle{width:80px;height:80px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:'Nunito';font-weight:900;font-size:2rem;border:5px solid var(--green);transition:border-color .3s}
+  .q-timer-circle.urgent{border-color:var(--red)}
+  .q-answered{font-family:'Nunito';font-weight:800;color:var(--yellow)}
+  .q-text-big{font-family:'Nunito';font-weight:900;font-size:clamp(1.4rem,4vw,2.4rem);line-height:1.35;text-align:center;background:var(--surface);border-radius:18px;padding:2rem;max-width:1000px;margin:0 auto 1.5rem;width:100%}
+  .q-tiles{max-width:1000px;margin:0 auto;width:100%}
+
+  #screen-reveal{padding:1.5rem;background:radial-gradient(ellipse at top,#243b6b,#0e1428 65%)}
+  .rv-head{text-align:center;max-width:1000px;margin:0 auto 1rem}
+  .rv-rate{font-family:'Nunito';font-weight:900;font-size:clamp(2rem,6vw,3.2rem)}
+  .rv-sub{color:var(--muted)}
+  .rv-grid{display:grid;grid-template-columns:1.2fr .9fr;gap:1.5rem;max-width:1100px;margin:1rem auto;align-items:start}
+  @media(max-width:820px){.rv-grid{grid-template-columns:1fr}}
+  .bars{background:var(--surface);border-radius:16px;padding:1.25rem}
+  .bars-title{font-size:.78rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:1rem}
+  .bar-row{display:flex;flex-direction:column;gap:.55rem;padding:.85rem 1rem;border-radius:12px;margin-bottom:.7rem;background:rgba(255,255,255,.04)}
+  .bar-row:last-child{margin-bottom:0}
+  .bar-row.correct{background:rgba(46,204,113,.13);outline:2px solid var(--green)}
+  .bar-head{display:flex;align-items:flex-start;gap:.7rem}
+  .bar-sh{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;color:#fff;font-size:.95rem}
+  .bar-sh.A{background:var(--a)}.bar-sh.B{background:var(--b)}.bar-sh.C{background:var(--c)}.bar-sh.D{background:var(--d);color:#1a1a2e}
+  .bar-label{flex:1;font-weight:700;font-size:1rem;line-height:1.35;word-break:break-word}
+  .bar-label .ok{color:var(--green);font-weight:900;margin-left:.25rem}
+  .bar-cnt{flex-shrink:0;font-family:'Nunito';font-weight:900;font-size:1.05rem;min-width:2.2rem;text-align:right}
+  .bar-track{height:12px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:6px;transition:width .6s;min-width:2px}
+  .bar-fill.A{background:var(--a)}.bar-fill.B{background:var(--b)}.bar-fill.C{background:var(--c)}.bar-fill.D{background:var(--d)}
+  .scorecard{background:var(--surface);border-radius:16px;padding:1.25rem}
+  .scorecard h3{font-size:.78rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:.85rem}
+  .lrow{display:flex;align-items:center;gap:.75rem;padding:.6rem .4rem;border-bottom:1px solid rgba(255,255,255,.06)}
+  .lrow:last-child{border-bottom:none}
+  .rk{font-family:'Nunito';font-weight:900;width:26px;text-align:center;color:var(--muted);flex-shrink:0}
+  .rn{flex:1;font-weight:700;line-height:1.3;word-break:break-word}
+  .rs{font-family:'Nunito';font-weight:800;color:var(--yellow);flex-shrink:0}
+  .rv-actions{text-align:center;margin-top:1.5rem}
+
+  #screen-final{padding:1.5rem;background:radial-gradient(ellipse at top,#243b6b,#0e1428 60%)}
+  .f-title{text-align:center;font-size:2rem;font-weight:900;margin:.5rem 0 1.5rem}
+  .podium{display:flex;justify-content:center;align-items:flex-end;gap:1rem;min-height:360px;max-width:760px;margin:0 auto 1.5rem}
+  .plat{flex:1;max-width:220px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+  .p-av{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Nunito';font-weight:900;font-size:2rem;color:#1a1a2e;margin-bottom:.5rem;border:4px solid rgba(255,255,255,.3)}
+  .p-nm{font-family:'Nunito';font-weight:800;font-size:1.15rem;text-align:center;max-width:210px;line-height:1.25;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .p-sc{color:var(--yellow);font-weight:800;margin-bottom:.55rem}
+  .p-bl{width:100%;border-radius:14px 14px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:1rem;font-family:'Nunito';font-weight:900;font-size:2.8rem;color:rgba(255,255,255,.9)}
+  .first .p-av{background:var(--gold)}.first .p-bl{background:linear-gradient(180deg,var(--gold),#b8860b);height:280px}
+  .second .p-av{background:var(--silver)}.second .p-bl{background:linear-gradient(180deg,var(--silver),#808080);height:200px}
+  .third .p-av{background:var(--bronze)}.third .p-bl{background:linear-gradient(180deg,var(--bronze),#8b5a2b);height:140px}
+  .crown{font-size:2rem;margin-bottom:.25rem}
+  .f-board{max-width:600px;margin:0 auto}
+</style>
+</head>
+<body>
+
+<div id="screen-setup" class="screen active">
+  <div class="badge">Sprint Planning · Live Game</div>
+  <h1 class="big">🏃 Host: Sprint Planning</h1>
+  <p class="sub">Pick a lesson. Everyone gets the same questions, in sync.</p>
+  <div id="fb-warn"></div>
+  <div class="pick" id="pick"></div>
+  <button class="btn btn-primary" id="create-btn" style="font-size:1.1rem;padding:1rem 3rem" onclick="createGame()" disabled>Create game →</button>
+  <div style="margin-top:1rem"><a class="btn btn-secondary" href="index.html" style="font-size:.85rem;padding:.5rem 1.2rem">← Hub</a></div>
+</div>
+
+<div id="screen-lobby" class="screen">
+  <div class="lobby-top">
+    <div><h1 class="big" id="lobby-lesson">Lesson</h1><span class="sub" id="lobby-sub"></span></div>
+    <button class="btn btn-secondary" onclick="cancelGame()" style="font-size:.85rem;padding:.5rem 1.2rem">✕ End game</button>
+  </div>
+  <div class="join-box">
+    <div class="qr-host" id="qr-host"></div>
+    <div class="join-info">
+      <div class="k">Join at</div>
+      <div class="url" id="join-url">play.html</div>
+      <div class="pin-lbl">Game PIN</div>
+      <div class="pin-big" id="pin-big">------</div>
+    </div>
+  </div>
+  <div class="players-wrap">
+    <div class="players-count" id="players-count">Waiting for players…</div>
+    <div class="chips" id="chips"></div>
+    <div class="lobby-actions">
+      <button class="btn btn-green" id="start-btn" style="font-size:1.15rem;padding:1rem 3.5rem" onclick="startGame()">Start game 🚀</button>
+    </div>
+  </div>
+</div>
+
+<div id="screen-q" class="screen">
+  <div class="q-top">
+    <div class="q-idx" id="q-idx">Question 1 / 10</div>
+    <div class="q-timer-circle" id="q-timer">30</div>
+    <div class="q-answered" id="q-answered">0 answered</div>
+  </div>
+  <div class="q-text-big" id="q-text"></div>
+  <div class="q-tiles tiles" id="q-tiles"></div>
+</div>
+
+<div id="screen-reveal" class="screen">
+  <div class="rv-head">
+    <div class="rv-rate" id="rv-rate">–</div>
+    <div class="rv-sub" id="rv-sub">answered correctly</div>
+  </div>
+  <div class="rv-grid">
+    <div class="bars" id="rv-bars"></div>
+    <div class="scorecard"><h3>🏆 Leaderboard</h3><div id="rv-board"></div></div>
+  </div>
+  <div class="rv-actions">
+    <button class="btn btn-yellow" id="next-btn" style="font-size:1.1rem;padding:.9rem 3rem" onclick="nextQuestion()">Next →</button>
+  </div>
+</div>
+
+<div id="screen-final" class="screen">
+  <div class="f-title">🏆 Final Results</div>
+  <div class="podium" id="f-podium"></div>
+  <div class="f-board" id="f-board"></div>
+  <div style="text-align:center;margin-top:1.5rem">
+    <button class="btn btn-primary" onclick="location.reload()">🔄 New game</button>
+    <a class="btn btn-secondary" href="index.html">🏠 Hub</a>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════ FIREBASE CONFIG (required for live multiplayer) ═══════════
+   One-time setup (free, ~5 min):
+   1. Go to https://console.firebase.google.com  →  Add project
+   2. Build → Realtime Database → Create database → Start in TEST MODE
+   3. Project settings (gear) → Your apps → Web app (</>) → register
+   4. Copy the firebaseConfig object it gives you over the one below
+      (make sure databaseURL is included).
+   The SAME config goes in BOTH host-game.html and play.html. */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBUjsot15FuYuB2or9XklqF3H_-Bnxi9YE",
+  authDomain: "safe-quiz-20238.firebaseapp.com",
+  databaseURL: "https://safe-quiz-20238-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "safe-quiz-20238",
+  storageBucket: "safe-quiz-20238.firebasestorage.app",
+  messagingSenderId: "728130638190",
+  appId: "1:728130638190:web:6f9ae15944ad6c2b6d317f",
+  measurementId: "G-F63L91MNJV"
+};
+
+const LESSONS = [{"id": 1, "title": "Sprint Planning", "icon": "🏃", "color": "#1368ce", "draw": 10, "questions": [{"q": "What is the main purpose of Sprint Planning?", "answers": ["To assign blame for the last sprint", "To define what can be delivered this sprint and how the work will be done", "To write every line of code in advance", "To finalize the product's annual budget"], "correct": 1, "explanation": "Sprint Planning kicks off the sprint by defining what can be delivered and how the team will get it done.", "qid": "L1Q0"}, {"q": "Who participates in Sprint Planning?", "answers": ["Only the Scrum Master", "Only the developers", "The entire Scrum Team (Product Owner, developers, Scrum Master)", "Only senior management"], "correct": 2, "explanation": "The whole Scrum Team collaborates: the PO brings priorities, the developers plan the work, and the Scrum Master facilitates.", "qid": "L1Q1"}, {"q": "What are the three topics Sprint Planning addresses?", "answers": ["Budget, scope, timeline", "Why the sprint is valuable, what can be done, and how the work gets done", "Hiring, training, and reporting", "Design, testing, and release"], "correct": 1, "explanation": "Sprint Planning answers three topics: Why (the goal/value), What (selected items), and How (the plan to deliver them).", "qid": "L1Q2"}, {"q": "What single objective is created during Sprint Planning to give the sprint focus?", "answers": ["The Sprint Goal", "The Definition of Done", "The release plan", "The team charter"], "correct": 0, "explanation": "The team crafts a Sprint Goal — a concise objective that provides focus and a shared purpose for the sprint.", "qid": "L1Q3"}, {"q": "What is the Sprint Backlog?", "answers": ["The full product roadmap", "The selected items plus a plan for delivering them and the Sprint Goal", "A list of bugs only", "The company's quarterly OKRs"], "correct": 1, "explanation": "The Sprint Backlog = the Sprint Goal + the Product Backlog items selected + the plan to deliver them.", "qid": "L1Q4"}, {"q": "Who decides how many items are pulled into the sprint?", "answers": ["The Product Owner alone", "The developers, based on their capacity", "The Scrum Master", "The stakeholders"], "correct": 1, "explanation": "The developers select how much work to take on, based on their capacity and past performance — no one forces the amount.", "qid": "L1Q5"}, {"q": "What is a reasonable timebox for Sprint Planning for a one-month sprint?", "answers": ["No more than 8 hours", "A full week", "30 minutes", "3 days"], "correct": 0, "explanation": "Sprint Planning is timeboxed to a maximum of 8 hours for a one-month sprint, and usually shorter for shorter sprints.", "qid": "L1Q6"}, {"q": "Who is accountable for ordering the Product Backlog that feeds Sprint Planning?", "answers": ["The Scrum Master", "The Product Owner", "The developers", "The project manager"], "correct": 1, "explanation": "The Product Owner is accountable for ordering the Product Backlog so the most valuable work is ready to be planned.", "qid": "L1Q7"}, {"q": "Why is the Definition of Done important during Sprint Planning?", "answers": ["It sets individual bonuses", "It gives a shared understanding of what 'complete' means for each item", "It replaces the Sprint Goal", "It assigns tasks to specific people"], "correct": 1, "explanation": "The Definition of Done provides a shared standard for quality and completeness that the team plans against.", "qid": "L1Q8"}, {"q": "What should happen if the selected work turns out to be too much once the sprint is underway?", "answers": ["The team works unpaid overtime", "The scope is renegotiated with the Product Owner", "The sprint is cancelled automatically", "Nothing — the plan is fixed"], "correct": 1, "explanation": "The scope may be clarified and renegotiated with the Product Owner as more is learned — the plan can adapt within the sprint.", "qid": "L1Q9"}, {"q": "How detailed should the plan for the first days of the sprint be?", "answers": ["Every task for the whole sprint, to the minute", "Decomposed into small units of work (often a day or less) for the near term", "No plan is needed at all", "Only a single high-level bullet"], "correct": 1, "explanation": "Developers often decompose items into smaller units of work — a day or less — enough to start with confidence; later days can be refined.", "qid": "L1Q10"}, {"q": "Which best describes the Sprint Goal's relationship to the selected backlog items?", "answers": ["They are unrelated", "The items are chosen to support and achieve the Sprint Goal", "The goal is written after the sprint ends", "The goal lists every task verbatim"], "correct": 1, "explanation": "The selected Product Backlog items are chosen because, together, they deliver the Sprint Goal — the goal gives the work coherence.", "qid": "L1Q11"}]}];
+const DUR = 30;
+let db=null, fbReady=false;
+function configLooksSet(){const c=FIREBASE_CONFIG||{};return !!(c.apiKey&&c.databaseURL&&c.apiKey.indexOf('PASTE')<0&&c.databaseURL.indexOf('PASTE')<0);}
+function ensureFirebase(){
+  if(fbReady)return '';
+  if(typeof firebase==='undefined')return "Firebase didn't load — check your internet connection (the app loads Firebase from the web), then reload the page.";
+  if(!configLooksSet())return "Firebase isn't set up yet.\n\nOpen host-game.html and play.html, paste your firebaseConfig into the block at the top of the script, save, then reload this page.";
+  try{ if(!firebase.apps||!firebase.apps.length){firebase.initializeApp(FIREBASE_CONFIG);} db=firebase.database(); fbReady=true; return ''; }
+  catch(e){ return "Firebase init error: "+((e&&e.message)||e); }
+}
+
+let selLesson=null, pin=null, gameRef=null, game=null, hostTimer=null, revealed=false;
+
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+/* setup screen */
+function initSetup(){
+  if(typeof firebase==='undefined' || !configLooksSet()){
+    document.getElementById('fb-warn').innerHTML='<div class="setup-warn">⚙️ <b>Live multiplayer needs a free Firebase project.</b> Paste your <code>firebaseConfig</code> into the top of <code>host-game.html</code> and <code>play.html</code> (see the comment there), then reload. Until then, use the self-paced lesson links on the Hub.</div>';
+  }
+  const pick=document.getElementById('pick');
+  pick.innerHTML=LESSONS.map(l=>`<div class="pcard" style="--pc:${l.color}" onclick="selectLesson(${l.id})" id="pc-${l.id}">
+    <div class="pc-n">Lesson ${l.id}</div><div class="pc-t">${l.icon} ${l.title}</div><div class="pc-m">${l.draw} questions · ${DUR}s each</div></div>`).join('');
+}
+function selectLesson(id){
+  selLesson=LESSONS.find(l=>l.id===id);
+  document.querySelectorAll('.pcard').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('pc-'+id).classList.add('sel');
+  document.getElementById('create-btn').disabled=false;
+}
+
+/* build fixed deck (same for everyone) */
+function buildDeck(l){
+  const picked=shuffle(l.questions).slice(0,l.draw);
+  return picked.map(q=>{
+    const opts=q.answers.map((t,i)=>({t,ok:i===q.correct}));
+    const sh=shuffle(opts);
+    return {q:q.q, ex:q.explanation, opts:sh.map(o=>o.t), correct:sh.findIndex(o=>o.ok)};
+  });
+}
+
+async function createGame(){
+  if(!selLesson){ toast('Pick a lesson first ☝️'); return; }
+  const err=ensureFirebase();
+  if(err){ alert(err); return; }
+  const btn=document.getElementById('create-btn'); const label=btn.textContent;
+  btn.disabled=true; btn.textContent='Creating…';
+  try{
+    pin=(''+Math.floor(100000+Math.random()*900000));
+    const deck=buildDeck(selLesson);
+    gameRef=db.ref('games/'+pin);
+    await gameRef.set({
+      lessonId:selLesson.id, title:selLesson.title, icon:selLesson.icon, color:selLesson.color,
+      deck:deck, phase:'lobby', currentQ:-1, qStart:0, duration:DUR, players:{}, createdAt:Date.now()
+    });
+    // NOTE: we deliberately do NOT auto-delete the game if the host disconnects.
+    // A tab reload, phone sleep, or brief network drop would otherwise wipe the
+    // whole game (and everyone's scores). The game is removed only via "End game".
+    gameRef.on('value',s=>{game=s.val();onGame();});
+    showLobby(deck.length);
+  }catch(e){
+    alert('Could not create the game: '+((e&&e.message)||e)+'\n\nCommon causes: the Realtime Database has not been created in the Firebase console, the databaseURL in your config is wrong, or the database rules are not in test mode.');
+    btn.disabled=false; btn.textContent=label;
+  }
+}
+function showLobby(n){
+  document.getElementById('lobby-lesson').textContent=selLesson.icon+' Lesson '+selLesson.id;
+  document.getElementById('lobby-sub').textContent=selLesson.title+' · '+n+' questions';
+  document.getElementById('pin-big').textContent=pin;
+  const playURL=new URL('sprint-play.html',location.href).href+'?pin='+pin;
+  document.getElementById('join-url').textContent=new URL('sprint-play.html',location.href).href;
+  const box=document.getElementById('qr-host');box.innerHTML='';
+  try{ if(typeof QRCode!=='undefined'){ new QRCode(box,{text:playURL,width:180,height:180,colorDark:'#16213e',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M}); } else throw 0; }
+  catch(e){ box.innerHTML='<img width="180" height="180" alt="QR" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='+encodeURIComponent(playURL)+'">'; }
+  show('screen-lobby');
+}
+
+/* react to game state (host owns transitions but re-renders players/answers live) */
+function onGame(){
+  try{
+    if(!game)return;
+    const players=game.players||{};
+    const names=Object.keys(players).map(k=>players[k]).filter(Boolean);
+    if(game.phase==='lobby'){
+      document.getElementById('players-count').textContent=names.length?`${names.length} player${names.length!==1?'s':''} joined`:'Waiting for players…';
+      document.getElementById('chips').innerHTML=names.map(p=>`<div class="chip">${esc((p&&p.name)||'Player')}</div>`).join('');
+      document.getElementById('start-btn').disabled=names.length===0;
+    }else if(game.phase==='question'){
+      renderAnswered();
+    }else if(game.phase==='reveal'){
+      renderReveal();            // re-render on late player answers so counts/board stay live
+    }else if(game.phase==='final'){
+      renderFinal();             // re-render as any last scores arrive
+    }
+  }catch(e){ console.error('onGame error (ignored):',e); }
+}
+function renderAnswered(){
+  const players=game.players||{};const ids=Object.keys(players);
+  const qi=game.currentQ;let ans=0;
+  ids.forEach(id=>{const p=players[id];const a=p&&p.answers;if(a&&a[qi]!==undefined)ans++;});
+  document.getElementById('q-answered').textContent=`${ans} / ${ids.length} answered`;
+  if(ids.length>0 && ans>=ids.length && !revealed){ setTimeout(()=>doReveal(),400); }
+}
+
+async function startGame(){ await gotoQuestion(0); }
+async function gotoQuestion(i){
+  revealed=false;
+  await gameRef.update({phase:'question',currentQ:i,qStart:Date.now(),duration:DUR});
+  renderQuestion(i);
+  startHostTimer();
+}
+function renderQuestion(i){
+  if(window.Hunt){window.Hunt.start();window.Hunt.unduck();window.Hunt.tension(0);}
+  const d=game.deck[i];const sh=['▲','●','■','◆'],cl=['A','B','C','D'];
+  document.getElementById('q-idx').textContent=`Question ${i+1} / ${game.deck.length}`;
+  document.getElementById('q-text').textContent=d.q;
+  document.getElementById('q-tiles').innerHTML=d.opts.map((t,k)=>`<div class="tile ${cl[k]}"><span class="sh">${sh[k]}</span>${esc(t)}</div>`).join('');
+  document.getElementById('q-answered').textContent='0 answered';
+  show('screen-q');
+}
+function startHostTimer(){
+  clearInterval(hostTimer);
+  const el=document.getElementById('q-timer');
+  function tick(){
+    const elapsed=(Date.now()-game.qStart)/1000;
+    const left=Math.max(0,Math.ceil(DUR-elapsed));
+    el.textContent=left;el.className='q-timer-circle'+(left<=5?' urgent':'');
+    if(window.Hunt) window.Hunt.tension(Math.min(1,elapsed/DUR));   // closer to the deadline = more frantic
+    if(left<=0){clearInterval(hostTimer);doReveal();}
+  }
+  tick();hostTimer=setInterval(tick,300);
+}
+
+async function doReveal(){
+  if(revealed)return;revealed=true;clearInterval(hostTimer);
+  if(window.Hunt){window.Hunt.tension(0);window.Hunt.sting();window.Hunt.duck();}   // dramatic hit, then breathe
+  await gameRef.update({phase:'reveal'});
+  renderReveal();
+}
+function renderReveal(){
+  const i=game.currentQ,d=game.deck[i],players=game.players||{};const ids=Object.keys(players);
+  const counts=[0,0,0,0];let correct=0,answered=0;
+  ids.forEach(id=>{const p=players[id];const a=p&&p.answers;const ans=a&&a[i];if(ans&&typeof ans.choice==='number'){answered++;if(ans.choice>=0&&ans.choice<4)counts[ans.choice]++;if(ans.ok)correct++;}});
+  const rate=answered?Math.round(correct/answered*100):0;
+  document.getElementById('rv-rate').textContent=rate+'%';
+  document.getElementById('rv-sub').textContent=`answered correctly · ${correct} of ${answered}`;
+  const sh=['▲','●','■','◆'],cl=['A','B','C','D'];const max=Math.max(1,...counts);
+  document.getElementById('rv-bars').innerHTML='<div class="bars-title">How the room answered</div>'+d.opts.map((t,k)=>
+    `<div class="bar-row ${k===d.correct?'correct':''}">
+       <div class="bar-head">
+         <div class="bar-sh ${cl[k]}">${sh[k]}</div>
+         <div class="bar-label">${esc(t)}${k===d.correct?'<span class="ok">✓</span>':''}</div>
+         <div class="bar-cnt">${counts[k]}</div>
+       </div>
+       <div class="bar-track"><div class="bar-fill ${cl[k]}" style="width:${counts[k]/max*100}%"></div></div>
+     </div>`).join('');
+  renderBoard('rv-board',5);
+  const last=i>=game.deck.length-1;
+  document.getElementById('next-btn').textContent=last?'See final podium →':'Next →';
+  show('screen-reveal');
+}
+function sortedPlayers(){
+  const players=(game&&game.players)||{};
+  return Object.keys(players)
+    .map(id=>{const p=players[id]||{};return {id,name:p.name||'Player',score:p.score||0,joinedAt:p.joinedAt||0,answers:p.answers||{}};})
+    .sort((a,b)=>(b.score||0)-(a.score||0)||(a.joinedAt||0)-(b.joinedAt||0));
+}
+function renderBoard(elId,limit){
+  const list=sortedPlayers().slice(0,limit||99);
+  document.getElementById(elId).innerHTML=list.length?list.map((e,i)=>
+    `<div class="lrow"><div class="rk">${i+1}</div><div class="rn">${esc(e.name)}</div><div class="rs">${(e.score||0).toLocaleString()}</div></div>`).join('')
+    :'<div style="color:var(--muted);text-align:center;padding:1rem">No scores yet</div>';
+}
+
+async function nextQuestion(){
+  const i=game.currentQ+1;
+  if(i<game.deck.length){ await gotoQuestion(i); }
+  else{ await gameRef.update({phase:'final'}); renderFinal(); }
+}
+function renderFinal(){
+  if(window.Hunt){window.Hunt.unduck();window.Hunt.tension(.15);}   // ease off for the reveal of winners
+  const list=sortedPlayers();const top=list.slice(0,3);
+  const order=[1,0,2],cls=['first','second','third'],md=['🥇','🥈','🥉'];
+  document.getElementById('f-podium').innerHTML=top.length?order.map(idx=>{
+    if(!top[idx])return '<div class="plat"></div>';const e=top[idx];
+    return `<div class="plat ${cls[idx]}">${idx===0?'<div class="crown">👑</div>':''}<div class="p-av">${esc(e.name.charAt(0).toUpperCase())}</div><div class="p-nm">${esc(e.name)}</div><div class="p-sc">${(e.score||0).toLocaleString()} pts</div><div class="p-bl">${md[idx]}</div></div>`;
+  }).join(''):'<div style="color:var(--muted)">No players</div>';
+  document.getElementById('f-board').innerHTML=list.map((e,i)=>
+    `<div class="lrow"><div class="rk">${i+1}</div><div class="rn">${esc(e.name)}</div><div class="rs">${(e.score||0).toLocaleString()}</div></div>`).join('');
+  show('screen-final');
+}
+
+function cancelGame(){
+  if(!confirm('End this game for everyone and delete all scores?'))return;
+  if(gameRef){gameRef.remove();} location.reload();
+}
+/* Deliberately no beforeunload delete: if the host tab reloads or sleeps,
+   the game and all scores must survive. */
+initSetup();
+</script>
+<!-- ══════════ GAME MUSIC + STING (synthesized with Web Audio — no copyrighted audio) ══════════ -->
+<div style="position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;gap:8px;align-items:center">
+  <button id="mood-toggle" title="Change mood"
+    style="height:44px;padding:0 14px;border-radius:22px;border:2px solid rgba(255,255,255,.25);
+           background:rgba(22,33,62,.85);color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:.85rem;
+           cursor:pointer;backdrop-filter:blur(4px)">🕯️ Spooky</button>
+  <button id="music-toggle" aria-label="Toggle music" title="Mute / unmute"
+    style="width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,.25);
+           background:rgba(22,33,62,.85);color:#fff;font-size:1.1rem;cursor:pointer;
+           display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)">🔊</button>
+</div>
+<script>
+(function(){
+  let ctx=null, master=null, started=false, muted=false, tension=0, loopTimer=null, bedNodes=[];
+  // ---- presets ----
+  const PRESETS={
+    spooky:{ label:'🕯️ Spooky', vol:0.9,
+      bed:'spooky', pulseLow:70, pulseHi:40, glint:[932,1245,1397,1661], glintType:'triangle',
+      calcInterval:tn=>1200-tn*560 },
+    gameshow:{ label:'🎪 Game-show', vol:0.8,
+      bed:'gameshow', pulseLow:160, pulseHi:160, glint:[523.25,659.25,783.99,1046.5], glintType:'square',
+      calcInterval:tn=>640-tn*180 },   // steady bright "think" tick that speeds up
+    off:{ label:'🔇 No music', vol:0 }
+  };
+  let modeKeys=['spooky','gameshow','off'], modeIdx=0, P=PRESETS.spooky;
+
+  function ensure(){ if(ctx)return; const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return;
+    ctx=new AC(); master=ctx.createGain(); master.gain.value=0; master.connect(ctx.destination); }
+  function now(){return ctx.currentTime;}
+  function fadeTo(v,sec){ if(master) master.gain.linearRampToValueAtTime(v, now()+(sec||1.0)); }
+  function stopBed(){ bedNodes.forEach(n=>{try{n.stop?n.stop():0;}catch(e){} try{n.disconnect();}catch(e){}}); bedNodes=[]; }
+
+  // --- beds ---
+  function buildBed(kind){
+    stopBed();
+    if(kind==='spooky'){
+      const drone=ctx.createOscillator(); drone.type='sawtooth'; drone.frequency.value=55;
+      const dg=ctx.createGain(); dg.gain.value=0.05;
+      const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=320; lp.Q.value=6;
+      const lfo=ctx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.12;
+      const lfoG=ctx.createGain(); lfoG.gain.value=140; lfo.connect(lfoG); lfoG.connect(lp.frequency);
+      drone.connect(lp); lp.connect(dg); dg.connect(master); drone.start(); lfo.start();
+      const fifth=ctx.createOscillator(); fifth.type='sine'; fifth.frequency.value=82.4;
+      const fg=ctx.createGain(); fg.gain.value=0.025; fifth.connect(fg); fg.connect(master); fifth.start();
+      bedNodes.push(drone,lfo,fifth);
+    } else if(kind==='gameshow'){
+      // warm, gently pulsing bright pad (think-music vibe)
+      const a=ctx.createOscillator(); a.type='triangle'; a.frequency.value=130.8; // C3
+      const b=ctx.createOscillator(); b.type='triangle'; b.frequency.value=196.0; // G3
+      const g=ctx.createGain(); g.gain.value=0.03;
+      const trem=ctx.createOscillator(); trem.type='sine'; trem.frequency.value=2.2;
+      const tremG=ctx.createGain(); tremG.gain.value=0.02; trem.connect(tremG); tremG.connect(g.gain);
+      a.connect(g); b.connect(g); g.connect(master); a.start(); b.start(); trem.start();
+      bedNodes.push(a,b,trem);
+    }
+  }
+
+  // --- pulse loop (heartbeat / tick) ---
+  function pulse(){
+    if(!ctx||P.vol===0){ loopTimer=setTimeout(pulse,600); return; }
+    const t=now();
+    function hit(tt,lo,hi,peak){ const o=ctx.createOscillator(); o.type=(P.bed==='gameshow')?'square':'sine';
+      o.frequency.setValueAtTime(lo,tt); o.frequency.exponentialRampToValueAtTime(hi,tt+0.16);
+      const g=ctx.createGain(); g.gain.setValueAtTime(0.0001,tt); g.gain.exponentialRampToValueAtTime(peak,tt+0.02); g.gain.exponentialRampToValueAtTime(0.0001,tt+0.2);
+      o.connect(g); g.connect(master); o.start(tt); o.stop(tt+0.24); }
+    hit(t,P.pulseLow,P.pulseHi,0.5);
+    if(P.bed!=='gameshow') hit(t+0.33,P.pulseLow*0.94,P.pulseHi*0.95,0.38);  // spooky double-thump
+    if(tension>0.5 && Math.random()<0.35 && P.glint){
+      const h=ctx.createOscillator(); h.type=P.glintType; h.frequency.value=P.glint[Math.floor(Math.random()*P.glint.length)];
+      const hg=ctx.createGain(); hg.gain.setValueAtTime(0.0001,t); hg.gain.exponentialRampToValueAtTime(0.04,t+0.05); hg.gain.exponentialRampToValueAtTime(0.0001,t+1.0);
+      h.connect(hg); hg.connect(master); h.start(t); h.stop(t+1.1);
+    }
+    loopTimer=setTimeout(pulse, P.calcInterval?P.calcInterval(tension):900);
+  }
+
+  // --- dramatic reveal sting ---
+  function playSting(){
+    if(!ctx||P.vol===0||muted) return;
+    const t=now();
+    if(P.bed==='gameshow'){
+      // bright 3-note "ta-da" arpeggio
+      const notes=[523.25,659.25,1046.5];
+      notes.forEach((f,i)=>{ const tt=t+i*0.11; const o=ctx.createOscillator(); o.type='square'; o.frequency.value=f;
+        const g=ctx.createGain(); g.gain.setValueAtTime(0.0001,tt); g.gain.exponentialRampToValueAtTime(0.5,tt+0.02); g.gain.exponentialRampToValueAtTime(0.0001,tt+0.5);
+        o.connect(g); g.connect(master); o.start(tt); o.stop(tt+0.55); });
+    } else {
+      // spooky hit: low boom + dissonant swell
+      const o=ctx.createOscillator(); o.type='sawtooth'; o.frequency.setValueAtTime(140,t); o.frequency.exponentialRampToValueAtTime(48,t+0.6);
+      const g=ctx.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.7,t+0.03); g.gain.exponentialRampToValueAtTime(0.0001,t+1.3);
+      const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=900;
+      o.connect(lp); lp.connect(g); g.connect(master); o.start(t); o.stop(t+1.4);
+      const d=ctx.createOscillator(); d.type='triangle'; d.frequency.value=370; // minor-second-ish clash
+      const dg=ctx.createGain(); dg.gain.setValueAtTime(0.0001,t); dg.gain.exponentialRampToValueAtTime(0.12,t+0.05); dg.gain.exponentialRampToValueAtTime(0.0001,t+0.9);
+      d.connect(dg); dg.connect(master); d.start(t); d.stop(t+1.0);
+    }
+  }
+
+  function applyPreset(key){
+    P=PRESETS[key];
+    const moodBtn=document.getElementById('mood-toggle'); if(moodBtn) moodBtn.textContent=P.label;
+    if(!ctx) return;
+    if(key==='off'){ fadeTo(0,0.4); stopBed(); }
+    else { buildBed(P.bed); fadeTo(muted?0:P.vol,0.8); }
+  }
+
+  window.Hunt = {
+    start(){ ensure(); if(!ctx) return;
+      if(ctx.state==='suspended') ctx.resume();
+      if(!started){ started=true; buildBed(P.bed); pulse(); }
+      if(!muted && P.vol>0) fadeTo(P.vol,2.0);
+    },
+    tension(v){ tension=Math.max(0,Math.min(1,v)); },
+    duck(){ fadeTo(muted?0:(P.vol*0.4),0.3); },
+    unduck(){ fadeTo(muted?0:P.vol,0.6); },
+    sting(){ playSting(); },
+    mute(m){ muted=m; fadeTo(m?0:P.vol,0.4); }
+  };
+
+  // buttons
+  const moodBtn=document.getElementById('mood-toggle');
+  moodBtn.textContent=P.label;
+  moodBtn.addEventListener('click',()=>{ window.Hunt.start(); modeIdx=(modeIdx+1)%modeKeys.length; applyPreset(modeKeys[modeIdx]); });
+  const muteBtn=document.getElementById('music-toggle');
+  muteBtn.addEventListener('click',()=>{ window.Hunt.start(); muted=!muted; window.Hunt.mute(muted); muteBtn.textContent=muted?'🔇':'🔊'; });
+  ['click','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,function once(){ window.Hunt.start(); },{once:true}));
+})();
+</script>
+</body>
+</html>

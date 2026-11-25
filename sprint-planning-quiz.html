@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprint Planning — Quick Quiz</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap');
+  :root{
+    --bg:#1a1a2e;--surface:#16213e;--card:#0f3460;--accent:#e94560;--theme:#1368ce;
+    --yellow:#f5a623;--green:#2ecc71;--red:#e74c3c;--muted:#a0aec0;--white:#fff;
+    --a:#e21b3c;--b:#1368ce;--c:#26890c;--d:#ffa602;--gold:#ffd700;--silver:#c0c0c0;--bronze:#cd7f32;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:#fff;min-height:100vh;overflow-x:hidden}
+  h1,h2,h3{font-family:'Nunito',sans-serif}
+  .screen{display:none;min-height:100vh}
+  .screen.active{display:flex;flex-direction:column}
+
+  /* START */
+  #screen-start{align-items:center;justify-content:center;padding:2rem;text-align:center;background:linear-gradient(135deg,#1a1a2e 0%,var(--theme) 240%)}
+  .badge{background:var(--theme);color:#fff;font-family:'Nunito';font-weight:900;font-size:.8rem;padding:.35rem 1rem;border-radius:20px;display:inline-block;margin-bottom:1rem;letter-spacing:2px;text-transform:uppercase}
+  .s-icon{font-size:3.2rem;margin-bottom:.4rem}
+  .s-title{font-size:clamp(1.7rem,5vw,2.5rem);font-weight:900;line-height:1.1;margin-bottom:.35rem}
+  .s-sub{color:var(--muted);margin-bottom:1.75rem}
+  .rules{background:var(--surface);border-radius:16px;padding:1.1rem 1.6rem;text-align:left;max-width:380px;width:100%;margin:0 auto 1.75rem}
+  .rules li{list-style:none;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.06);display:flex;gap:.6rem;align-items:center;font-size:.9rem}
+  .rules li:last-child{border-bottom:none}
+  .btn{display:inline-block;padding:.85rem 2rem;border-radius:50px;border:none;cursor:pointer;font-family:'Nunito';font-weight:800;font-size:1rem;transition:all .15s;margin:.25rem;color:#fff;text-decoration:none}
+  .btn:hover{transform:scale(1.04)}
+  .btn-theme{background:var(--theme)}
+  .btn-primary{background:var(--accent)}
+  .btn-secondary{background:var(--surface);border:2px solid rgba(255,255,255,.2)}
+  .btn-yellow{background:var(--yellow);color:#1a1a2e}
+
+  /* QUIZ */
+  #screen-quiz{background:var(--bg)}
+  .qhead{background:var(--surface);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid rgba(255,255,255,.08);flex-shrink:0}
+  .qhead .lbl{font-family:'Nunito';font-weight:800;font-size:.95rem}
+  .qhead .prog{font-size:.82rem;color:var(--muted)}
+  .qhead .sc{background:var(--card);padding:.4rem 1rem;border-radius:20px;font-family:'Nunito';font-weight:800;font-size:.88rem}
+  .tbar-wrap{height:8px;background:rgba(255,255,255,.1);flex-shrink:0}
+  .tbar{height:100%;background:linear-gradient(90deg,var(--green),var(--yellow));transition:width 1s linear,background .5s}
+  .tbar.urgent{background:linear-gradient(90deg,var(--red),var(--accent))}
+  .qwrap{flex:1;display:flex;flex-direction:column;padding:1.5rem;max-width:860px;margin:0 auto;width:100%}
+  .qcount{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:.75rem}
+  .qtimer{text-align:center;font-family:'Nunito';font-weight:900;font-size:1.5rem;margin-bottom:1rem;color:var(--yellow)}
+  .qtext{font-family:'Nunito';font-weight:800;font-size:clamp(1.1rem,3vw,1.5rem);line-height:1.4;background:var(--surface);border-radius:16px;padding:1.5rem 2rem;margin-bottom:1.5rem;text-align:center;flex-shrink:0}
+  .answers{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;flex:1}
+  @media(max-width:500px){.answers{grid-template-columns:1fr}}
+  .abtn{display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;border-radius:12px;border:none;cursor:pointer;font-family:'Nunito';font-weight:700;font-size:.95rem;color:#fff;text-align:left;transition:all .15s;min-height:68px;word-break:break-word}
+  .abtn:hover:not(:disabled){transform:scale(1.02);filter:brightness(1.1)}
+  .abtn:disabled{cursor:default}
+  .abtn.a{background:var(--a)}.abtn.b{background:var(--b)}.abtn.c{background:var(--c)}.abtn.d{background:var(--d);color:#1a1a2e}
+  .abtn .shape{width:34px;height:34px;flex-shrink:0;border-radius:6px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:1.05rem;font-weight:900}
+  .abtn.incorrect{opacity:.4}
+  .abtn.revealed-correct{outline:4px solid var(--green);filter:brightness(1.15)}
+  .fb{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);background:var(--surface);border-radius:20px;padding:1.6rem 2.3rem;text-align:center;z-index:100;opacity:0;transition:all .25s;pointer-events:none;border:3px solid transparent;max-width:90vw}
+  .fb.show{transform:translate(-50%,-50%) scale(1);opacity:1}
+  .fb.ok{border-color:var(--green)}.fb.no{border-color:var(--red)}
+  .fb .em{font-size:2.6rem;display:block;margin-bottom:.35rem}
+  .fb .lb{font-family:'Nunito';font-weight:800;font-size:1.3rem}
+  .fb .pt{color:var(--yellow);font-weight:700;margin-top:.2rem}
+  .fb .ex{font-size:.83rem;color:var(--muted);margin-top:.5rem;max-width:300px;line-height:1.4}
+
+  /* RESULT */
+  #screen-result{align-items:center;justify-content:center;padding:2rem;text-align:center;background:linear-gradient(135deg,#1a1a2e 0%,var(--theme) 260%)}
+  .r-trophy{font-size:4rem;margin-bottom:.75rem}
+  .r-title{font-size:1.9rem;font-weight:900;margin-bottom:.35rem}
+  .r-sub{color:var(--muted);margin-bottom:1.75rem}
+  .r-circle{width:150px;height:150px;border-radius:50%;border:6px solid var(--yellow);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 1.75rem;background:var(--surface)}
+  .r-num{font-family:'Nunito';font-weight:900;font-size:2.3rem;color:var(--yellow)}
+  .r-lbl{font-size:.72rem;color:var(--muted)}
+  .r-stats{display:flex;gap:1.25rem;justify-content:center;margin-bottom:1.5rem;flex-wrap:wrap}
+  .r-box{background:var(--surface);border-radius:12px;padding:.9rem 1.4rem;min-width:92px}
+  .r-val{font-family:'Nunito';font-weight:800;font-size:1.4rem}
+  .r-blbl{font-size:.72rem;color:var(--muted)}
+  .r-msg{font-family:'Nunito';font-weight:800;font-size:1.05rem;color:var(--yellow);margin-bottom:1.5rem}
+</style>
+</head>
+<body>
+
+<!-- START -->
+<div id="screen-start" class="screen active">
+  <div class="badge">Scrum · Quick Quiz</div>
+  <div class="s-icon">🏃</div>
+  <h1 class="s-title">Sprint Planning</h1>
+  <p class="s-sub">A quick 10-question warm-up</p>
+  <ul class="rules">
+    <li>⚡ <span>Answer fast — speed earns bonus points</span></li>
+    <li>✅ <span>One correct answer per question</span></li>
+    <li>⏱️ <span>10 questions · 30 seconds each</span></li>
+    <li>💡 <span>Short explanation after every question</span></li>
+  </ul>
+  <button class="btn btn-theme" style="font-size:1.1rem;padding:1rem 3rem" onclick="startQuiz()">Start 🚀</button>
+</div>
+
+<!-- QUIZ -->
+<div id="screen-quiz" class="screen">
+  <div class="qhead">
+    <div class="lbl">🏃 Sprint Planning</div>
+    <div class="prog" id="q-prog">Question 1 / 10</div>
+    <div class="sc">⭐ <span id="q-score">0</span></div>
+  </div>
+  <div class="tbar-wrap"><div class="tbar" id="tbar"></div></div>
+  <div class="qwrap">
+    <div class="qcount" id="q-count">QUESTION 1 OF 10</div>
+    <div class="qtimer" id="q-timer">30</div>
+    <div class="qtext" id="q-text"></div>
+    <div class="answers" id="q-answers"></div>
+  </div>
+  <div class="fb" id="fb">
+    <span class="em" id="fb-em">✅</span>
+    <div class="lb" id="fb-lb">Correct!</div>
+    <div class="pt" id="fb-pt"></div>
+    <div class="ex" id="fb-ex"></div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="screen-result" class="screen">
+  <div class="r-trophy" id="r-trophy">🏆</div>
+  <h1 class="r-title">Quiz Complete!</h1>
+  <p class="r-sub">Sprint Planning · Quick Quiz</p>
+  <div class="r-circle"><span class="r-num" id="r-pct">0%</span><span class="r-lbl">Correct</span></div>
+  <div class="r-stats">
+    <div class="r-box"><div class="r-val" id="r-correct">0</div><div class="r-blbl">Correct</div></div>
+    <div class="r-box"><div class="r-val" id="r-wrong">0</div><div class="r-blbl">Wrong</div></div>
+    <div class="r-box"><div class="r-val" id="r-points">0</div><div class="r-blbl">Points</div></div>
+  </div>
+  <div class="r-msg" id="r-msg">Nice work!</div>
+  <button class="btn btn-yellow" onclick="startQuiz()">🔄 Play again</button>
+</div>
+
+<script>
+/* ---- Question bank: 12 questions, a random 10 are drawn each round ---- */
+const BANK = [
+  {q:"What is the main purpose of Sprint Planning?",
+   answers:["To assign blame for the last sprint","To define what can be delivered this sprint and how the work will be done","To write every line of code in advance","To finalize the product's annual budget"],
+   correct:1,explanation:"Sprint Planning kicks off the sprint by defining what can be delivered and how the team will get it done."},
+  {q:"Who participates in Sprint Planning?",
+   answers:["Only the Scrum Master","Only the developers","The entire Scrum Team (Product Owner, developers, Scrum Master)","Only senior management"],
+   correct:2,explanation:"The whole Scrum Team collaborates: the PO brings priorities, the developers plan the work, and the Scrum Master facilitates."},
+  {q:"What are the three topics Sprint Planning addresses?",
+   answers:["Budget, scope, timeline","Why the sprint is valuable, what can be done, and how the work gets done","Hiring, training, and reporting","Design, testing, and release"],
+   correct:1,explanation:"Sprint Planning answers three topics: Why (the goal/value), What (selected items), and How (the plan to deliver them)."},
+  {q:"What single objective is created during Sprint Planning to give the sprint focus?",
+   answers:["The Sprint Goal","The Definition of Done","The release plan","The team charter"],
+   correct:0,explanation:"The team crafts a Sprint Goal — a concise objective that provides focus and a shared purpose for the sprint."},
+  {q:"What is the Sprint Backlog?",
+   answers:["The full product roadmap","The selected items plus a plan for delivering them and the Sprint Goal","A list of bugs only","The company's quarterly OKRs"],
+   correct:1,explanation:"The Sprint Backlog = the Sprint Goal + the Product Backlog items selected + the plan to deliver them."},
+  {q:"Who decides how many items are pulled into the sprint?",
+   answers:["The Product Owner alone","The developers, based on their capacity","The Scrum Master","The stakeholders"],
+   correct:1,explanation:"The developers select how much work to take on, based on their capacity and past performance — no one forces the amount."},
+  {q:"What is a reasonable timebox for Sprint Planning for a one-month sprint?",
+   answers:["No more than 8 hours","A full week","30 minutes","3 days"],
+   correct:0,explanation:"Sprint Planning is timeboxed to a maximum of 8 hours for a one-month sprint, and usually shorter for shorter sprints."},
+  {q:"Who is accountable for ordering the Product Backlog that feeds Sprint Planning?",
+   answers:["The Scrum Master","The Product Owner","The developers","The project manager"],
+   correct:1,explanation:"The Product Owner is accountable for ordering the Product Backlog so the most valuable work is ready to be planned."},
+  {q:"Why is the Definition of Done important during Sprint Planning?",
+   answers:["It sets individual bonuses","It gives a shared understanding of what 'complete' means for each item","It replaces the Sprint Goal","It assigns tasks to specific people"],
+   correct:1,explanation:"The Definition of Done provides a shared standard for quality and completeness that the team plans against."},
+  {q:"What should happen if the selected work turns out to be too much once the sprint is underway?",
+   answers:["The team works unpaid overtime","The scope is renegotiated with the Product Owner","The sprint is cancelled automatically","Nothing — the plan is fixed"],
+   correct:1,explanation:"The scope may be clarified and renegotiated with the Product Owner as more is learned — the plan can adapt within the sprint."},
+  {q:"How detailed should the plan for the first days of the sprint be?",
+   answers:["Every task for the whole sprint, to the minute","Decomposed into small units of work (often a day or less) for the near term","No plan is needed at all","Only a single high-level bullet"],
+   correct:1,explanation:"Developers often decompose items into smaller units of work — a day or less — enough to start with confidence; later days can be refined as the sprint proceeds."},
+  {q:"Which best describes the Sprint Goal's relationship to the selected backlog items?",
+   answers:["They are unrelated","The items are chosen to support and achieve the Sprint Goal","The goal is written after the sprint ends","The goal lists every task verbatim"],
+   correct:1,explanation:"The selected Product Backlog items are chosen because, together, they deliver the Sprint Goal — the goal gives the work coherence."}
+];
+
+/* ---- state ---- */
+const DRAW=10, DUR=30;
+let deck=[], qi=0, score=0, correct=0, timeLeft=DUR, timer=null, answered=false;
+
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function startQuiz(){
+  const picked=shuffle(BANK).slice(0,DRAW);
+  deck=picked.map(q=>{const opts=q.answers.map((t,i)=>({t,ok:i===q.correct}));const sh=shuffle(opts);return {q:q.q,ex:q.explanation,opts:sh,correct:sh.findIndex(o=>o.ok)};});
+  qi=0;score=0;correct=0;
+  show('screen-quiz');render();
+}
+function render(){
+  const item=deck[qi];const shapes=['▲','●','■','◆'],cls=['a','b','c','d'];
+  document.getElementById('q-prog').textContent=`Question ${qi+1} / ${deck.length}`;
+  document.getElementById('q-score').textContent=score.toLocaleString();
+  document.getElementById('q-count').textContent=`QUESTION ${qi+1} OF ${deck.length}`;
+  document.getElementById('q-text').textContent=item.q;
+  document.getElementById('q-answers').innerHTML=item.opts.map((o,i)=>`<button class="abtn ${cls[i]}" onclick="pick(${i})"><span class="shape">${shapes[i]}</span>${esc(o.t)}</button>`).join('');
+  answered=false;startTimer();
+}
+function startTimer(){timeLeft=DUR;paint();clearInterval(timer);timer=setInterval(()=>{timeLeft--;paint();if(timeLeft<=0){clearInterval(timer);timeUp();}},1000);}
+function paint(){const pct=(timeLeft/DUR)*100,bar=document.getElementById('tbar'),n=document.getElementById('q-timer');bar.style.width=pct+'%';bar.className='tbar'+(timeLeft<=5?' urgent':'');n.textContent=timeLeft;n.style.color=timeLeft<=5?'var(--accent)':'var(--yellow)';}
+function pick(i){
+  if(answered)return;answered=true;clearInterval(timer);
+  const item=deck[qi],btns=document.querySelectorAll('.abtn');btns.forEach(b=>b.disabled=true);
+  const ok=i===item.correct;const pts=ok?Math.round(500+(timeLeft/DUR)*500):0;
+  if(ok){score+=pts;correct++;}
+  btns[item.correct].classList.add('revealed-correct');if(!ok)btns[i].classList.add('incorrect');
+  feedback(ok,pts,item.ex,false);setTimeout(next,2400);
+}
+function timeUp(){
+  if(answered)return;answered=true;
+  const item=deck[qi],btns=document.querySelectorAll('.abtn');btns.forEach(b=>b.disabled=true);
+  btns[item.correct].classList.add('revealed-correct');
+  feedback(false,0,item.ex,true);setTimeout(next,2400);
+}
+function next(){document.getElementById('fb').className='fb';qi++;if(qi<deck.length)render();else finish();}
+function feedback(ok,pts,ex,to){
+  const el=document.getElementById('fb');const em=['🎉','🔥','⚡','✅','🏆'];
+  document.getElementById('fb-em').textContent=to?'⏰':(ok?em[Math.floor(Math.random()*em.length)]:'❌');
+  document.getElementById('fb-lb').textContent=to?"Time's Up!":(ok?'Correct!':'Not Quite!');
+  document.getElementById('fb-pt').textContent=ok?`+${pts} pts`:'0 pts';
+  document.getElementById('fb-ex').textContent=ex||'';
+  el.className='fb show '+(ok?'ok':'no');
+}
+function finish(){
+  const total=deck.length,pct=Math.round((correct/total)*100);
+  document.getElementById('r-pct').textContent=pct+'%';
+  document.getElementById('r-correct').textContent=correct;
+  document.getElementById('r-wrong').textContent=total-correct;
+  document.getElementById('r-points').textContent=score.toLocaleString();
+  let tr,msg;
+  if(pct===100){tr='🏆';msg='Perfect score! Sprint Planning nailed!';}
+  else if(pct>=80){tr='🌟';msg='Excellent — you know your stuff!';}
+  else if(pct>=60){tr='👍';msg='Good effort! Keep sharpening it.';}
+  else{tr='📚';msg="Worth a quick review — give it another go!";}
+  document.getElementById('r-trophy').textContent=tr;
+  document.getElementById('r-msg').textContent=msg;
+  show('screen-result');
+}
+</script>
+</body>
+</html>
